@@ -20,12 +20,12 @@
   <header class="w-full max-w-4xl flex flex-col sm:flex-row items-center justify-between py-4 border-b border-slate-800 gap-4">
     <h1 class="text-2xl font-black tracking-wider text-amber-400">FLIPBOOK STUDIO 3D</h1>
     <div class="flex items-center gap-3">
-      <button onclick="window.loadSampleBook()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-4 py-2 rounded-lg transition shadow-lg">
+      <button onclick="window.loadSampleBook()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-4 py-2 rounded-lg transition shadow-lg cursor-pointer">
         Try Demo Book
       </button>
       <label class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-4 py-2 rounded-lg cursor-pointer transition border border-slate-700">
         Upload PDF / Images
-        <input type="file" id="fileInput" accept="image/*,application/pdf" multiple class="hidden">
+        <input type="file" id="fileInput" accept="image/*,.pdf,application/pdf" multiple class="hidden">
       </label>
     </div>
   </header>
@@ -41,16 +41,14 @@
 
     <!-- Flipbook Container -->
     <div id="flipbookWrapper" class="w-full flex items-center justify-center overflow-hidden py-6">
-      <div id="bookContainer">
-        <canvas id="flipbook"></canvas>
-      </div>
+      <div id="flipbook"></div>
     </div>
 
     <!-- Controls / Navigation -->
     <div class="flex items-center gap-6 mt-6 bg-slate-800/60 backdrop-blur px-6 py-3 rounded-full border border-slate-700/50 shadow-xl">
-      <button id="prevBtn" class="hover:text-amber-400 font-bold transition disabled:opacity-30">◀️ Prev</button>
+      <button id="prevBtn" class="hover:text-amber-400 font-bold transition disabled:opacity-30 cursor-pointer">◀️ Prev</button>
       <span id="pageIndicator" class="text-sm font-semibold tracking-wide text-slate-300">Page 0 of 0</span>
-      <button id="nextBtn" class="hover:text-amber-400 font-bold transition disabled:opacity-30">Next ▶️</button>
+      <button id="nextBtn" class="hover:text-amber-400 font-bold transition disabled:opacity-30 cursor-pointer">Next ▶️</button>
     </div>
   </main>
 
@@ -123,8 +121,7 @@
         }
       ];
 
-      // Generate dummy canvas images for demo
-      const pages = titles.map((t, i) => {
+      const pages = titles.map((t) => {
         const canvas = document.createElement('canvas');
         canvas.width = 600;
         canvas.height = 800;
@@ -172,6 +169,9 @@
         const img = document.createElement('img');
         img.src = p.src;
         img.alt = Book Page ${index + 1};
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'contain';
         pageDiv.appendChild(img);
         bookEl.appendChild(pageDiv);
       });
@@ -211,34 +211,44 @@
       showLoader(Processing ${files.length} file(s)...);
       let pages = [];
 
-      for (const file of files) {
-        if (file.type === 'application/pdf') {
-          const arrayBuffer = await file.arrayBuffer();
-          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-          for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const viewport = page.getViewport({ scale: 1.5 });
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-            await page.render({ canvasContext: context, viewport: viewport }).promise;
-            pages.push({ src: canvas.toDataURL() });
+      try {
+        for (const file of files) {
+          if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+            const arrayBuffer = await file.arrayBuffer();
+            const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+            const pdf = await loadingTask.promise;
+            for (let i = 1; i <= pdf.numPages; i++) {
+              const page = await pdf.getPage(i);
+              const viewport = page.getViewport({ scale: 1.5 });
+              const canvas = document.createElement('canvas');
+              const context = canvas.getContext('2d');
+              canvas.height = viewport.height;
+              canvas.width = viewport.width;
+              await page.render({ canvasContext: context, viewport: viewport }).promise;
+              pages.push({ src: canvas.toDataURL() });
+            }
+          } else if (file.type.startsWith('image/') || file.name.match(/\.(jpg|jpeg|png|webp)$/i)) {
+            const src = await new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onload = (event) => resolve(event.target.result);
+              reader.readAsDataURL(file);
+            });
+            pages.push({ src });
           }
-        } else if (file.type.startsWith('image/')) {
-          const src = await new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = (e) => resolve(e.target.result);
-            reader.readAsDataURL(file);
-          });
-          pages.push({ src });
         }
-      }
 
-      if (pages.length > 0) {
-        renderFlipbook(pages);
+        if (pages.length > 0) {
+          renderFlipbook(pages);
+        } else {
+          alert("No valid images or PDF pages found.");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Error processing file. Please try another file.");
+      } finally {
+        hideLoader();
+        fileInput.value = ''; // Reset input so same file can be selected again
       }
-      hideLoader();
     });
 
     // Navigation buttons
