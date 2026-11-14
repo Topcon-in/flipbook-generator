@@ -87,4 +87,168 @@
         const gainNode = audioCtx.createGain();
         oscillator.type = 'triangle';
         oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
-        oscillator.frequency.exponentialRa
+        oscillator.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.1);
+        gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.1);
+      } catch (e) {
+        // Ignore audio context restrictions before user gesture
+      }
+    }
+
+    // Initialize Demo Sample Book
+    window.loadSampleBook = function() {
+      showLoader("Loading Demo Book...");
+      const titles = [
+        {
+          title: "THE MIDNIGHT ARCHIVE",
+          sub: "Interactive 3D Flipbook Demo\nSwipe or Drag Corner to Turn Page",
+          bg: "#0f172a",
+          fg: "#f8fafc"
+        },
+        {
+          title: "Chapter 1: The Locked Door",
+          sub: "Every page turns with realistic 3D shadows and paper physics.\nUpload your own PDF or multiple photos to begin.",
+          bg: "#fffbeb",
+          fg: "#1e293b"
+        },
+        {
+          title: "Chapter 2: Mobile Touch Ready",
+          sub: "Designed specifically for smartphones and tablets.\nJust swipe your finger from right to left like a real book.",
+          bg: "#f8fafc",
+          fg: "#1e293b"
+        }
+      ];
+
+      // Generate dummy canvas images for demo
+      const pages = titles.map((t, i) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 600;
+        canvas.height = 800;
+        const ctx = canvas.getContext('2d');
+        
+        ctx.fillStyle = t.bg;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.fillStyle = t.fg;
+        ctx.font = "bold 36px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(t.title, canvas.width / 2, 300);
+        
+        ctx.font = "20px sans-serif";
+        const lines = t.sub.split('\n');
+        lines.forEach((line, idx) => {
+          ctx.fillText(line, canvas.width / 2, 400 + (idx * 30));
+        });
+
+        return { src: canvas.toDataURL() };
+      });
+
+      renderFlipbook(pages);
+      hideLoader();
+    };
+
+    function updateIndicator(currentIndex, total) {
+      if (pageIndicator) {
+        pageIndicator.textContent = Page ${currentIndex + 1} of ${total};
+      }
+    }
+
+    function renderFlipbook(pages) {
+      if (pageFlip) {
+        pageFlip.destroy();
+      }
+
+      bookEl.innerHTML = '';
+      pages.forEach((p, index) => {
+        const pageDiv = document.createElement('div');
+        pageDiv.className = 'page';
+        if (index === 0 || index === pages.length - 1) {
+          pageDiv.setAttribute('data-density', 'hard');
+        }
+        const img = document.createElement('img');
+        img.src = p.src;
+        img.alt = Book Page ${index + 1};
+        pageDiv.appendChild(img);
+        bookEl.appendChild(pageDiv);
+      });
+
+      const isMobile = window.innerWidth < 768;
+      const pageWidth = isMobile ? Math.min(window.innerWidth - 40, 350) : 450;
+      const pageHeight = pageWidth * 1.33;
+
+      pageFlip = new St.PageFlip(bookEl, {
+        width: pageWidth,
+        height: pageHeight,
+        size: isMobile ? "fixed" : "stretch",
+        minWidth: 300,
+        maxWidth: 600,
+        minHeight: 400,
+        maxHeight: 800,
+        maxShadowOpacity: 0.5,
+        showCover: true,
+        mobileScrollSupport: true
+      });
+
+      pageFlip.loadFromImages(pages.map(p => p.src));
+
+      pageFlip.on('flip', (e) => {
+        playFlipSound();
+        updateIndicator(e.data, pages.length);
+      });
+
+      updateIndicator(0, pages.length);
+    }
+
+    // File input handler for images/PDFs
+    fileInput.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files);
+      if (files.length === 0) return;
+
+      showLoader(Processing ${files.length} file(s)...);
+      let pages = [];
+
+      for (const file of files) {
+        if (file.type === 'application/pdf') {
+          const arrayBuffer = await file.arrayBuffer();
+          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const viewport = page.getViewport({ scale: 1.5 });
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            await page.render({ canvasContext: context, viewport: viewport }).promise;
+            pages.push({ src: canvas.toDataURL() });
+          }
+        } else if (file.type.startsWith('image/')) {
+          const src = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.readAsDataURL(file);
+          });
+          pages.push({ src });
+        }
+      }
+
+      if (pages.length > 0) {
+        renderFlipbook(pages);
+      }
+      hideLoader();
+    });
+
+    // Navigation buttons
+    prevBtn.addEventListener('click', () => {
+      if (pageFlip) pageFlip.flipPrev();
+    });
+
+    nextBtn.addEventListener('click', () => {
+      if (pageFlip) pageFlip.flipNext();
+    });
+  </script>
+</body>
+</html>
