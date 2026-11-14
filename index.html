@@ -611,8 +611,8 @@ article class="seo-content">
             const totalPages = pdf.numPages;
             const pageDataUrls = [];
 
-            for (let i = 1; i <= totalPages; i++) {
-                loaderText.textContent = Rendering page ${i} of ${totalPages}...;
+            loaderText.textContent = 'Rendering page ' + i + ' of ' + totalPages + '...';
+        
                 const page = await pdf.getPage(i);
                 const viewport = page.getViewport({ scale: 1.6 });
                 const canvas = document.createElement('canvas');
