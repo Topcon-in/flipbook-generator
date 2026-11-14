@@ -637,7 +637,7 @@ article class="seo-content">
 
     // Process Multiple Images (1 image = 1 page)
     async function handleImages(files) {
-        showLoader(Processing ${files.length} image(s)...);
+        showLoader(`Processing ${files.length} image(s)...`);
         files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
 
         const pageDataUrls = [];
