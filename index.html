@@ -99,53 +99,59 @@
 
     // Initialize Demo Sample Book
     window.loadSampleBook = function() {
-      showLoader("Loading Demo Book...");
-      const titles = [
-        {
-          title: "THE MIDNIGHT ARCHIVE",
-          sub: "Interactive 3D Flipbook Demo\nSwipe or Drag Corner to Turn Page",
-          bg: "#0f172a",
-          fg: "#f8fafc"
-        },
-        {
-          title: "Chapter 1: The Locked Door",
-          sub: "Every page turns with realistic 3D shadows and paper physics.\nUpload your own PDF or multiple photos to begin.",
-          bg: "#fffbeb",
-          fg: "#1e293b"
-        },
-        {
-          title: "Chapter 2: Mobile Touch Ready",
-          sub: "Designed specifically for smartphones and tablets.\nJust swipe your finger from right to left like a real book.",
-          bg: "#f8fafc",
-          fg: "#1e293b"
-        }
-      ];
+      try {
+        showLoader("Loading Demo Book...");
+        const titles = [
+          {
+            title: "THE MIDNIGHT ARCHIVE",
+            sub: "Interactive 3D Flipbook Demo\nSwipe or Drag Corner to Turn Page",
+            bg: "#0f172a",
+            fg: "#f8fafc"
+          },
+          {
+            title: "Chapter 1: The Locked Door",
+            sub: "Every page turns with realistic 3D shadows and paper physics.\nUpload your own PDF or multiple photos to begin.",
+            bg: "#fffbeb",
+            fg: "#1e293b"
+          },
+          {
+            title: "Chapter 2: Mobile Touch Ready",
+            sub: "Designed specifically for smartphones and tablets.\nJust swipe your finger from right to left like a real book.",
+            bg: "#f8fafc",
+            fg: "#1e293b"
+          }
+        ];
 
-      const pages = titles.map((t) => {
-        const canvas = document.createElement('canvas');
-        canvas.width = 600;
-        canvas.height = 800;
-        const ctx = canvas.getContext('2d');
-        
-        ctx.fillStyle = t.bg;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        ctx.fillStyle = t.fg;
-        ctx.font = "bold 36px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText(t.title, canvas.width / 2, 300);
-        
-        ctx.font = "20px sans-serif";
-        const lines = t.sub.split('\n');
-        lines.forEach((line, idx) => {
-          ctx.fillText(line, canvas.width / 2, 400 + (idx * 30));
+        const pages = titles.map((t) => {
+          const canvas = document.createElement('canvas');
+          canvas.width = 600;
+          canvas.height = 800;
+          const ctx = canvas.getContext('2d');
+          
+          ctx.fillStyle = t.bg;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          
+          ctx.fillStyle = t.fg;
+          ctx.font = "bold 36px sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText(t.title, canvas.width / 2, 300);
+          
+          ctx.font = "20px sans-serif";
+          const lines = t.sub.split('\n');
+          lines.forEach((line, idx) => {
+            ctx.fillText(line, canvas.width / 2, 400 + (idx * 30));
+          });
+
+          return { src: canvas.toDataURL() };
         });
 
-        return { src: canvas.toDataURL() };
-      });
-
-      renderFlipbook(pages);
-      hideLoader();
+        renderFlipbook(pages);
+        hideLoader();
+      } catch (err) {
+        hideLoader();
+        console.error(err);
+        alert("Demo Error: " + err.message);
+      }
     };
 
     function updateIndicator(currentIndex, total) {
@@ -155,6 +161,12 @@
     }
 
     function renderFlipbook(pages) {
+      // Safe check for PageFlip constructor across different library bundles
+      const FlipConstructor = window.PageFlip || (window.St && window.St.PageFlip);
+      if (!FlipConstructor) {
+        throw new Error("PageFlip library failed to load from CDN. Check your internet connection.");
+      }
+
       if (pageFlip) {
         pageFlip.destroy();
       }
@@ -180,7 +192,7 @@
       const pageWidth = isMobile ? Math.min(window.innerWidth - 40, 350) : 450;
       const pageHeight = pageWidth * 1.33;
 
-      pageFlip = new St.PageFlip(bookEl, {
+      pageFlip = new FlipConstructor(bookEl, {
         width: pageWidth,
         height: pageHeight,
         size: isMobile ? "fixed" : "stretch",
@@ -244,7 +256,7 @@
         }
       } catch (err) {
         console.error(err);
-        alert("Error processing file. Please try another file.");
+        alert("Processing Error: " + err.message);
       } finally {
         hideLoader();
         fileInput.value = ''; // Reset input so same file can be selected again
