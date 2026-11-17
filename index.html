@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Slide Flipbook</title>
+    <title>Interactive Digital Book Maker</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
         body {
-            background: #111827;
+            background: #1e293b;
             color: #fff;
             display: flex;
             flex-direction: column;
@@ -15,134 +15,299 @@
             justify-content: center;
             min-height: 100vh;
             padding: 15px;
-            overflow: hidden;
         }
-        .upload-btn {
+        .top-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .btn {
             background: #4f46e5;
             color: #fff;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            margin-bottom: 20px;
             border: none;
+            padding: 12px 22px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
-        .upload-btn:hover { background: #4338ca; }
-        
-        /* Book Container */
-        .book-wrapper {
-            perspective: 1500px;
-            width: 100%;
-            max-width: 420px;
-            height: 540px;
+        .btn:hover { background: #4338ca; }
+        .btn-green { background: #059669; }
+        .btn-green:hover { background: #047857; }
+
+        /* Asli Khuli Hui Kitaab (Open Book Spread) */
+        .book-container {
             display: none;
-            position: relative;
-        }
-        .page-card {
             width: 100%;
-            height: 100%;
-            background: #fff;
-            border-radius: 4px 14px 14px 4px;
-            box-shadow: -8px 0 20px rgba(0,0,0,0.6), inset 15px 0 25px rgba(0,0,0,0.12);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            transform-origin: left center;
-            transition: transform 0.45s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s;
+            max-width: 820px;
+            height: 480px;
+            background: #334155;
+            padding: 12px;
+            border-radius: 12px;
+            box-shadow: 0 20px 45px rgba(0,0,0,0.6);
+            position: relative;
+            perspective: 1800px;
             user-select: none;
             cursor: grab;
         }
-        .page-card:active { cursor: grabbing; }
-        .page-card.flip-next { transform: rotateY(-45deg); opacity: 0.3; }
-        .page-card.flip-prev { transform: rotateY(30deg); opacity: 0.3; }
-        
-        .page-card img {
+        .book-container:active { cursor: grabbing; }
+
+        .open-book {
             width: 100%;
             height: 100%;
+            display: flex;
+            background: #fff;
+            border-radius: 6px;
+            position: relative;
+            overflow: hidden;
+        }
+        /* Beech ki Kitaab ki Binding Line */
+        .open-book::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 30px;
+            transform: translateX(-50%);
+            background: linear-gradient(to right, rgba(0,0,0,0.02), rgba(0,0,0,0.22) 50%, rgba(0,0,0,0.02));
+            pointer-events: none;
+            z-index: 10;
+        }
+        .sheet {
+            width: 50%;
+            height: 100%;
+            background: #fdfbf7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            position: relative;
+            transition: transform 0.5s ease, opacity 0.3s ease;
+        }
+        .sheet.left {
+            border-right: 1px solid #cbd5e1;
+            transform-origin: right center;
+        }
+        .sheet.right {
+            border-left: 1px solid #cbd5e1;
+            transform-origin: left center;
+        }
+        .sheet img {
+            max-width: 100%;
+            max-height: 100%;
             object-fit: contain;
             pointer-events: none;
         }
-        .hint {
-            margin-top: 15px;
-            font-size: 0.9rem;
-            color: #9ca3af;
+        .page-num {
+            position: absolute;
+            bottom: 8px;
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: bold;
+        }
+        .left .page-num { left: 12px; }
+        .right .page-num { right: 12px; }
+
+        /* Page Flip Animation */
+        .flip-right-out { transform: rotateY(-65deg); opacity: 0.3; }
+        .flip-left-out { transform: rotateY(65deg); opacity: 0.3; }
+
+        .bottom-info {
             display: none;
+            margin-top: 15px;
+            text-align: center;
+            color: #cbd5e1;
+            font-size: 0.9rem;
+        }
+        @media (max-width: 600px) {
+            .book-container { height: 320px; padding: 8px; }
         }
     </style>
 </head>
 <body>
 
-    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
-        Select Images for Book
-    </button>
-    <input type="file" id="fileInput" accept="image/*" multiple style="display:none" onchange="loadImages(this.files)">
+    <div class="top-bar">
+        <button class="btn" onclick="document.getElementById('fileInput').click()">
+            + Select Images for Book
+        </button>
+        <button class="btn btn-green" id="dlBtn" style="display:none;" onclick="downloadBook()">
+            &#11015; Download Flipbook
+        </button>
+        <input type="file" id="fileInput" accept="image/*" multiple style="display:none" onchange="createBook(this.files)">
+    </div>
 
-    <div class="book-wrapper" id="bookWrapper">
-        <div class="page-card" id="pageCard">
-            <img id="pageImg" src="" alt="Page">
+    <div class="book-container" id="bookContainer">
+        <div class="open-book">
+            <div class="sheet left" id="leftSheet">
+                <img id="leftImg" src="" alt="">
+                <span class="page-num" id="leftNum"></span>
+            </div>
+            <div class="sheet right" id="rightSheet">
+                <img id="rightImg" src="" alt="">
+                <span class="page-num" id="rightNum"></span>
+            </div>
         </div>
     </div>
 
-    <p class="hint" id="hintText">Slide left or right on the page to flip (Page <span id="pageNum">1/1</span>)</p>
+    <div class="bottom-info" id="bottomInfo">
+        Slide left or right on the book to turn pages
+    </div>
 
     <script>
-        let images = [];
-        let index = 0;
+        let pages = [];
+        let spreadIndex = 0; // Har spread mein 2 pages dikhenge (0-1, 2-3, 4-5...)
         let startX = 0;
 
-        function loadImages(files) {
+        async function createBook(files) {
             if (!files || files.length === 0) return;
-            images = [];
+            pages = [];
+
             for (let i = 0; i < files.length; i++) {
-                images.push(URL.createObjectURL(files[i]));
+                const dataUrl = await new Promise(resolve => {
+                    const reader = new FileReader();
+                    reader.onload = e => resolve(e.target.result);
+                    reader.readAsDataURL(files[i]);
+                });
+                pages.push(dataUrl);
             }
-            index = 0;
-            document.getElementById('bookWrapper').style.display = 'block';
-            document.getElementById('hintText').style.display = 'block';
-            showPage('none');
+
+            spreadIndex = 0;
+            document.getElementById('bookContainer').style.display = 'block';
+            document.getElementById('bottomInfo').style.display = 'block';
+            document.getElementById('dlBtn').style.display = 'inline-block';
+            renderSpread('none');
         }
 
-        function showPage(dir) {
-            const card = document.getElementById('pageCard');
-            const img = document.getElementById('pageImg');
-            
-            if (dir === 'next') card.classList.add('flip-next');
-            if (dir === 'prev') card.classList.add('flip-prev');
+        function renderSpread(dir) {
+            const leftSheet = document.getElementById('leftSheet');
+            const rightSheet = document.getElementById('rightSheet');
+            const leftImg = document.getElementById('leftImg');
+            const rightImg = document.getElementById('rightImg');
+            const leftNum = document.getElementById('leftNum');
+            const rightNum = document.getElementById('rightNum');
+
+            if (dir === 'next') rightSheet.classList.add('flip-right-out');
+            if (dir === 'prev') leftSheet.classList.add('flip-left-out');
 
             setTimeout(() => {
-                img.src = images[index];
-                card.classList.remove('flip-next', 'flip-prev');
-            }, dir === 'none' ? 0 : 180);
+                const leftIdx = spreadIndex * 2;
+                const rightIdx = leftIdx + 1;
 
-            document.getElementById('pageNum').innerText = (index + 1) + ' / ' + images.length;
+                if (pages[leftIdx]) {
+                    leftImg.src = pages[leftIdx];
+                    leftImg.style.display = 'block';
+                    leftNum.innerText = leftIdx + 1;
+                } else {
+                    leftImg.style.display = 'none';
+                    leftNum.innerText = '';
+                }
+
+                if (pages[rightIdx]) {
+                    rightImg.src = pages[rightIdx];
+                    rightImg.style.display = 'block';
+                    rightNum.innerText = rightIdx + 1;
+                } else {
+                    rightImg.style.display = 'none';
+                    rightNum.innerText = '';
+                }
+
+                rightSheet.classList.remove('flip-right-out');
+                leftSheet.classList.remove('flip-left-out');
+            }, dir === 'none' ? 0 : 220);
         }
 
-        const card = document.getElementById('pageCard');
+        const bookBox = document.getElementById('bookContainer');
 
-        // Mobile Touch Slide
-        card.addEventListener('touchstart', e => { startX = e.touches[0].clientX; });
-        card.addEventListener('touchend', e => {
-            let endX = e.changedTouches[0].clientX;
-            handleSwipe(startX - endX);
+        // Touch Slide (Mobile)
+        bookBox.addEventListener('touchstart', e => { startX = e.touches[0].clientX; });
+        bookBox.addEventListener('touchend', e => {
+            handleSwipe(startX - e.changedTouches[0].clientX);
         });
 
-        // Laptop Mouse Drag Slide
-        card.addEventListener('mousedown', e => { startX = e.clientX; });
-        card.addEventListener('mouseup', e => {
-            let endX = e.clientX;
-            handleSwipe(startX - endX);
+        // Mouse Drag Slide (Laptop)
+        bookBox.addEventListener('mousedown', e => { startX = e.clientX; });
+        bookBox.addEventListener('mouseup', e => {
+            handleSwipe(startX - e.clientX);
         });
 
         function handleSwipe(diff) {
-            if (diff > 40 && index < images.length - 1) {
-                index++;
-                showPage('next');
-            } else if (diff < -40 && index > 0) {
-                index--;
-                showPage('prev');
+            const maxSpread = Math.ceil(pages.length / 2) - 1;
+            if (diff > 40 && spreadIndex < maxSpread) {
+                spreadIndex++;
+                renderSpread('next');
+            } else if (diff < -40 && spreadIndex > 0) {
+                spreadIndex--;
+                renderSpread('prev');
             }
+        }
+
+        function downloadBook() {
+            if (pages.length === 0) return;
+            const pagesJson = JSON.stringify(pages);
+            const htmlFile = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive Digital Book</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+  body { background: #1e293b; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 15px; }
+  .book-container { width: 100%; max-width: 820px; height: 480px; background: #334155; padding: 12px; border-radius: 12px; box-shadow: 0 20px 45px rgba(0,0,0,0.6); perspective: 1800px; user-select: none; cursor: grab; }
+  .open-book { width: 100%; height: 100%; display: flex; background: #fff; border-radius: 6px; position: relative; overflow: hidden; }
+  .open-book::after { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 30px; transform: translateX(-50%); background: linear-gradient(to right, rgba(0,0,0,0.02), rgba(0,0,0,0.22) 50%, rgba(0,0,0,0.02)); pointer-events: none; }
+  .sheet { width: 50%; height: 100%; background: #fdfbf7; display: flex; align-items: center; justify-content: center; padding: 10px; position: relative; transition: transform 0.5s ease, opacity 0.3s; }
+  .sheet.left { border-right: 1px solid #cbd5e1; transform-origin: right center; }
+  .sheet.right { border-left: 1px solid #cbd5e1; transform-origin: left center; }
+  .sheet img { max-width: 100%; max-height: 100%; object-fit: contain; pointer-events: none; }
+  .page-num { position: absolute; bottom: 8px; font-size: 0.75rem; color: #64748b; font-weight: bold; }
+  .left .page-num { left: 12px; } .right .page-num { right: 12px; }
+  .flip-r { transform: rotateY(-65deg); opacity: 0.3; } .flip-l { transform: rotateY(65deg); opacity: 0.3; }
+  .hint { margin-top: 15px; color: #cbd5e1; font-size: 0.9rem; }
+  @media (max-width: 600px) { .book-container { height: 320px; padding: 8px; } }
+</style>
+</head>
+<body>
+  <div class="book-container" id="bk">
+    <div class="open-book">
+      <div class="sheet left" id="ls"><img id="li"><span class="page-num" id="ln"></span></div>
+      <div class="sheet right" id="rs"><img id="ri"><span class="page-num" id="rn"></span></div>
+    </div>
+  </div>
+  <p class="hint">Slide left or right on the book to turn pages</p>
+  <script>
+    const p = ${pagesJson}; let s = 0, sx = 0;
+    function r(d) {
+      const ls = document.getElementById('ls'), rs = document.getElementById('rs');
+      if(d==='n') rs.classList.add('flip-r'); if(d==='p') ls.classList.add('flip-l');
+      setTimeout(() => {
+        const l = s*2, ri = l+1;
+        document.getElementById('li').src = p[l] || ''; document.getElementById('li').style.display = p[l]?'block':'none'; document.getElementById('ln').innerText = p[l]?(l+1):'';
+        document.getElementById('ri').src = p[ri] || ''; document.getElementById('ri').style.display = p[ri]?'block':'none'; document.getElementById('rn').innerText = p[ri]?(ri+1):'';
+        rs.classList.remove('flip-r'); ls.classList.remove('flip-l');
+      }, d==='none'?0:220);
+    }
+    const b = document.getElementById('bk');
+    b.addEventListener('touchstart', e => sx = e.touches[0].clientX);
+    b.addEventListener('touchend', e => sw(sx - e.changedTouches[0].clientX));
+    b.addEventListener('mousedown', e => sx = e.clientX);
+    b.addEventListener('mouseup', e => sw(sx - e.clientX));
+    function sw(df) {
+      const m = Math.ceil(p.length/2)-1;
+      if(df>40 && s<m) { s++; r('n'); } else if(df<-40 && s>0) { s--; r('p'); }
+    }
+    r('none');
+  <\/script>
+</body>
+</html>`;
+            const blob = new Blob([htmlFile], { type: 'text/html' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'My-Interactive-Book.html';
+            a.click();
         }
     </script>
 
