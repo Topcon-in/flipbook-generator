@@ -3,483 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Interactive Flipbook Creator - Build & Download Digital Books</title>
-    <meta name="description" content="Create realistic 3D page-turning digital flipbooks from PDFs or images and download them as standalone interactive files, PDF, PNG, or JPG.">
-    
-    <!-- Realistic 3D Page Flip Library -->
-    <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.min.js"></script>
-    <!-- PDF.js to convert PDF pages into book pages -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <!-- jsPDF for PDF Download -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
+    <title>Simple Slide Flipbook</title>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
         body {
-            background: #f1f5f9;
-            color: #1e293b;
-            line-height: 1.6;
+            background: #111827;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 15px;
+            overflow: hidden;
         }
-        header {
-            background: linear-gradient(135deg, #1e1b4b, #4338ca);
-            color: #ffffff;
-            text-align: center;
-            padding: 40px 20px;
-            box-shadow: 0 4px 15px rgba(30, 27, 75, 0.25);
-        }
-        header h1 {
-            font-size: 2.2rem;
-            margin-bottom: 8px;
-        }
-        header p {
-            font-size: 1.05rem;
-            opacity: 0.9;
-        }
-        .container {
-            max-width: 960px;
-            margin: -25px auto 40px;
-            padding: 0 15px;
-        }
-        .card {
-            background: #ffffff;
-            border-radius: 16px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        .form-group label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #334155;
-        }
-        .text-input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1.5px solid #cbd5e1;
+        .upload-btn {
+            background: #4f46e5;
+            color: #fff;
+            padding: 12px 24px;
             border-radius: 8px;
             font-size: 1rem;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        .text-input:focus {
-            border-color: #4f46e5;
-        }
-        .upload-zone {
-            border: 2px dashed #6366f1;
-            background: #eef2ff;
-            border-radius: 12px;
-            padding: 30px 20px;
-            text-align: center;
+            font-weight: bold;
             cursor: pointer;
-            transition: all 0.3s;
+            margin-bottom: 20px;
+            border: none;
         }
-        .upload-zone:hover {
-            background: #e0e7ff;
-            border-color: #4338ca;
-        }
-        .upload-zone p {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #3730a3;
-            margin-bottom: 8px;
-        }
-        .upload-zone span {
-            font-size: 0.9rem;
-            color: #64748b;
-            display: block;
-            margin-bottom: 12px;
-        }
-        #loadingStatus {
-            display: none;
-            text-align: center;
-            margin: 20px 0;
-            font-weight: 600;
-            color: #4f46e5;
-            font-size: 1.1rem;
-        }
-        /* Book Preview Stage */
-        #workspace {
-            display: none;
-            margin-top: 30px;
-        }
+        .upload-btn:hover { background: #4338ca; }
+        
+        /* Book Container */
         .book-wrapper {
-            background: #0f172a;
-            padding: 30px 15px;
-            border-radius: 14px;
+            perspective: 1500px;
+            width: 100%;
+            max-width: 420px;
+            height: 540px;
+            display: none;
+            position: relative;
+        }
+        .page-card {
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            border-radius: 4px 14px 14px 4px;
+            box-shadow: -8px 0 20px rgba(0,0,0,0.6), inset 15px 0 25px rgba(0,0,0,0.12);
             display: flex;
-            justify-content: center;
             align-items: center;
-            overflow: hidden;
-            box-shadow: inset 0 0 25px rgba(0,0,0,0.6);
-        }
-        .flip-book {
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
-        }
-        .page {
-            background-color: #ffffff;
-            display: flex;
             justify-content: center;
-            align-items: center;
             overflow: hidden;
-            border: 1px solid #e2e8f0;
+            transform-origin: left center;
+            transition: transform 0.45s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s;
+            user-select: none;
+            cursor: grab;
         }
-        .page img {
+        .page-card:active { cursor: grabbing; }
+        .page-card.flip-next { transform: rotateY(-45deg); opacity: 0.3; }
+        .page-card.flip-prev { transform: rotateY(30deg); opacity: 0.3; }
+        
+        .page-card img {
             width: 100%;
             height: 100%;
             object-fit: contain;
-            user-select: none;
+            pointer-events: none;
         }
-        .controls-bar {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            align-items: center;
-            gap: 12px;
-            margin-top: 22px;
-        }
-        .btn {
-            background: #4f46e5;
-            color: #ffffff;
-            border: none;
-            padding: 12px 22px;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .btn:hover {
-            background: #4338ca;
-            transform: translateY(-1px);
-        }
-        .format-select {
-            padding: 11px 14px;
-            border-radius: 8px;
-            border: 1.5px solid #cbd5e1;
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: #1e293b;
-            background: #f8fafc;
-            cursor: pointer;
-            outline: none;
-        }
-        .btn-download {
-            background: #059669;
-            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
-        }
-        .btn-download:hover {
-            background: #047857;
-        }
-        .page-status {
-            font-weight: 700;
-            color: #334155;
-            min-width: 110px;
-            text-align: center;
-        }
-        .seo-article {
-            margin-top: 35px;
-            background: #ffffff;
-            border-radius: 16px;
-            padding: 30px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
-        }
-        .seo-article h2 {
-            font-size: 1.4rem;
-            color: #0f172a;
-            margin-bottom: 12px;
-        }
-        .seo-article p, .seo-article li {
-            color: #475569;
-            margin-bottom: 10px;
-        }
-        .seo-article ul {
-            padding-left: 20px;
+        .hint {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: #9ca3af;
+            display: none;
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>3D Interactive Flipbook Creator</h1>
-        <p>Turn PDFs or Images into realistic page-flipping digital books & download them instantly</p>
-    </header>
+    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+        Select Images for Book
+    </button>
+    <input type="file" id="fileInput" accept="image/*" multiple style="display:none" onchange="loadImages(this.files)">
 
-    <div class="container">
-        <div class="card">
-            <div class="form-group">
-                <label for="bookTitle">Digital Book Title (Used for Download File Name):</label>
-                <input type="text" id="bookTitle" class="text-input" placeholder="e.g., My Digital Magazine or E-Book" value="Interactive-Flipbook">
-            </div>
-
-            <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
-                <p>Click Here to Upload a PDF File or Multiple Images</p>
-                <span>Supports .PDF documents or multiple .JPG / .PNG images</span>
-                <input type="file" id="fileInput" accept="application/pdf, image/*" multiple style="display:none" onchange="processUpload(this.files)">
-            </div>
-
-            <div id="loadingStatus">Preparing your realistic 3D book pages... Please wait...</div>
-
-            <div id="workspace">
-                <div class="book-wrapper">
-                    <div id="flipbookContainer" class="flip-book"></div>
-                </div>
-
-                <div class="controls-bar">
-                    <button type="button" class="btn" id="prevBtn" onclick="flipPrev()">&#8592; Previous</button>
-                    <span class="page-status" id="pageCounter">Page 1</span>
-                    <button type="button" class="btn" id="nextBtn" onclick="flipNext()">Next &#8594;</button>
-                    
-                    <select id="downloadFormat" class="format-select">
-                        <option value="html">3D Interactive Book (.HTML)</option>
-                        <option value="pdf">Complete Book (.PDF)</option>
-                        <option value="png">Current Page (.PNG)</option>
-                        <option value="jpg">Current Page (.JPG)</option>
-                    </select>
-                    
-                    <button type="button" class="btn btn-download" onclick="handleDownload()">&#11015; Download</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="seo-article">
-            <h2>Build & Download Realistic Page-Flipping Digital Books</h2>
-            <p>Transform standard PDF files or image collections into realistic 3D page-turning digital books directly in your browser. Users can drag page corners or click navigation buttons just like reading a physical hardcover book.</p>
-            <h2>Ready to Share or Sell Anywhere</h2>
-            <ul>
-                <li><strong>PDF & Image Support:</strong> Upload a multi-page PDF document or select multiple photos at once.</li>
-                <li><strong>Realistic 3D Corner Curl:</strong> Experience smooth page-turning physics on both desktop and mobile screens.</li>
-                <li><strong>Multiple Download Formats:</strong> Export your finished project as a standalone 3D interactive file, a complete PDF document, or save individual pages in PNG and JPG formats.</li>
-            </ul>
+    <div class="book-wrapper" id="bookWrapper">
+        <div class="page-card" id="pageCard">
+            <img id="pageImg" src="" alt="Page">
         </div>
     </div>
 
+    <p class="hint" id="hintText">Slide left or right on the page to flip (Page <span id="pageNum">1/1</span>)</p>
+
     <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        let images = [];
+        let index = 0;
+        let startX = 0;
 
-        let pageImages = [];
-        let pageFlipInstance = null;
-
-        async function processUpload(files) {
+        function loadImages(files) {
             if (!files || files.length === 0) return;
-
-            const statusEl = document.getElementById('loadingStatus');
-            const workspaceEl = document.getElementById('workspace');
-            statusEl.style.display = 'block';
-            workspaceEl.style.display = 'none';
-            pageImages = [];
-
-            try {
-                if (files[0].type === 'application/pdf') {
-                    await extractPdfPages(files[0]);
-                } else {
-                    await extractImageFiles(files);
-                }
-
-                if (pageImages.length > 0) {
-                    statusEl.style.display = 'none';
-                    workspaceEl.style.display = 'block';
-                    buildFlipbook();
-                }
-            } catch (err) {
-                statusEl.innerText = 'Error loading file. Please try another PDF or image.';
-                console.error(err);
+            images = [];
+            for (let i = 0; i < files.length; i++) {
+                images.push(URL.createObjectURL(files[i]));
             }
+            index = 0;
+            document.getElementById('bookWrapper').style.display = 'block';
+            document.getElementById('hintText').style.display = 'block';
+            showPage('none');
         }
 
-        async function extractPdfPages(pdfFile) {
-            const arrayBuffer = await pdfFile.arrayBuffer();
-            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-            const totalPages = pdf.numPages;
+        function showPage(dir) {
+            const card = document.getElementById('pageCard');
+            const img = document.getElementById('pageImg');
+            
+            if (dir === 'next') card.classList.add('flip-next');
+            if (dir === 'prev') card.classList.add('flip-prev');
 
-            for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
-                document.getElementById('loadingStatus').innerText = Rendering PDF page ${pageNum} of ${totalPages}...;
-                const page = await pdf.getPage(pageNum);
-                const viewport = page.getViewport({ scale: 1.5 });
-                const canvas = document.createElement('canvas');
-                const context = canvas.getContext('2d');
-                canvas.width = viewport.width;
-                canvas.height = viewport.height;
+            setTimeout(() => {
+                img.src = images[index];
+                card.classList.remove('flip-next', 'flip-prev');
+            }, dir === 'none' ? 0 : 180);
 
-                await page.render({ canvasContext: context, viewport: viewport }).promise;
-                pageImages.push(canvas.toDataURL('image/jpeg', 0.85));
+            document.getElementById('pageNum').innerText = (index + 1) + ' / ' + images.length;
+        }
+
+        const card = document.getElementById('pageCard');
+
+        // Mobile Touch Slide
+        card.addEventListener('touchstart', e => { startX = e.touches[0].clientX; });
+        card.addEventListener('touchend', e => {
+            let endX = e.changedTouches[0].clientX;
+            handleSwipe(startX - endX);
+        });
+
+        // Laptop Mouse Drag Slide
+        card.addEventListener('mousedown', e => { startX = e.clientX; });
+        card.addEventListener('mouseup', e => {
+            let endX = e.clientX;
+            handleSwipe(startX - endX);
+        });
+
+        function handleSwipe(diff) {
+            if (diff > 40 && index < images.length - 1) {
+                index++;
+                showPage('next');
+            } else if (diff < -40 && index > 0) {
+                index--;
+                showPage('prev');
             }
-        }
-
-        function extractImageFiles(files) {
-            return new Promise((resolve) => {
-                let loaded = 0;
-                const fileArray = Array.from(files).filter(f => f.type.startsWith('image/'));
-                if (fileArray.length === 0) resolve();
-
-                fileArray.forEach((file, index) => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        pageImages[index] = e.target.result;
-                        loaded++;
-                        if (loaded === fileArray.length) resolve();
-                    };
-                    reader.readAsDataURL(file);
-                });
-            });
-        }
-
-        function buildFlipbook() {
-            const container = document.getElementById('flipbookContainer');
-            if (pageFlipInstance) {
-                pageFlipInstance.destroy();
-            }
-            container.innerHTML = '';
-
-            pageImages.forEach((imgSrc) => {
-                const pageDiv = document.createElement('div');
-                pageDiv.className = 'page';
-                const img = document.createElement('img');
-                img.src = imgSrc;
-                pageDiv.appendChild(img);
-                container.appendChild(pageDiv);
-            });
-
-            pageFlipInstance = new St.PageFlip(container, {
-                width: 400,
-                height: 550,
-                size: 'stretch',
-                minWidth: 280,
-                maxWidth: 480,
-                minHeight: 380,
-                maxHeight: 650,
-                maxShadowOpacity: 0.5,
-                showCover: true,
-                mobileScrollSupport: false
-            });
-
-            pageFlipInstance.loadFromHTML(document.querySelectorAll('#flipbookContainer .page'));
-
-            updateCounter();
-            pageFlipInstance.on('flip', () => {
-                updateCounter();
-            });
-        }
-
-        function updateCounter() {
-            if (!pageFlipInstance) return;
-            const current = pageFlipInstance.getCurrentPageIndex() + 1;
-            const total = pageFlipInstance.getPageCount();
-            document.getElementById('pageCounter').innerText = Page ${current} of ${total};
-        }
-
-        function flipPrev() {
-            if (!pageFlipInstance) return;
-            const current = pageFlipInstance.getCurrentPageIndex();
-            if (current > 0) {
-                pageFlipInstance.flip(current - 1);
-            }
-        }
-
-        function flipNext() {
-            if (!pageFlipInstance) return;
-            const current = pageFlipInstance.getCurrentPageIndex();
-            const total = pageFlipInstance.getPageCount();
-            if (current < total - 1) {
-                pageFlipInstance.flip(current + 1);
-            }
-        }
-
-        function handleDownload() {
-            if (pageImages.length === 0) return;
-            const format = document.getElementById('downloadFormat').value;
-            const rawTitle = document.getElementById('bookTitle').value.trim() || 'Interactive-Flipbook';
-            const safeName = rawTitle.replace(/[^a-z0-9\-_]/gi, '-');
-            const currentIndex = pageFlipInstance ? pageFlipInstance.getCurrentPageIndex() : 0;
-
-            if (format === 'html') {
-                downloadInteractiveBook(rawTitle, safeName);
-            } else if (format === 'pdf') {
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF();
-                pageImages.forEach((imgData, idx) => {
-                    if (idx > 0) pdf.addPage();
-                    const pdfWidth = pdf.internal.pageSize.getWidth();
-                    const pdfHeight = pdf.internal.pageSize.getHeight();
-                    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-                });
-                pdf.save(safeName + '.pdf');
-            } else if (format === 'png' || format === 'jpg') {
-                const canvas = document.createElement('canvas');
-                const img = new Image();
-                img.onload = function() {
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    const ctx = canvas.getContext('2d');
-                    if (format === 'jpg') {
-                        ctx.fillStyle = '#ffffff';
-                        ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    }
-                    ctx.drawImage(img, 0, 0);
-                    const mime = format === 'png' ? 'image/png' : 'image/jpeg';
-                    const link = document.createElement('a');
-                    link.href = canvas.toDataURL(mime, 0.92);
-                    link.download = ${safeName}-page-${currentIndex + 1}.${format};
-                    link.click();
-                };
-                img.src = pageImages[currentIndex];
-            }
-        }
-
-        function downloadInteractiveBook(rawTitle, safeFileName) {
-            const pagesHtml = pageImages.map(src => <div class="page"><img src="${src}" alt="Page"></div>).join('');
-            const standaloneHTML = `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${rawTitle}</title>
-<script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.min.js"><\/script>
-<style>
-  body { margin: 0; background: #0f172a; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
-  h2 { margin: 15px 0; font-size: 1.3rem; text-align: center; }
-  .book-box { width: 95%; max-width: 900px; display: flex; justify-content: center; }
-  .page { background: #fff; display: flex; align-items: center; justify-content: center; }
-  .page img { width: 100%; height: 100%; object-fit: contain; }
-  .nav { margin: 20px 0; display: flex; gap: 15px; align-items: center; }
-  button { background: #4f46e5; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-size: 1rem; cursor: pointer; }
-  button:hover { background: #4338ca; }
-</style>
-</head>
-<body>
-  <h2>${rawTitle}</h2>
-  <div class="book-box"><div id="book">${pagesHtml}</div></div>
-  <div class="nav">
-    <button onclick="pf.flip(Math.max(0, pf.getCurrentPageIndex()-1))">&#8592; Prev</button>
-    <span id="pg">Page 1</span>
-    <button onclick="pf.flip(Math.min(pf.getPageCount()-1, pf.getCurrentPageIndex()+1))">Next &#8594;</button>
-  </div>
-  <script>
-    const pf = new St.PageFlip(document.getElementById('book'), {
-      width: 400, height: 550, size: 'stretch', minWidth: 280, maxWidth: 480, minHeight: 380, maxHeight: 650, showCover: true
-    });
-    pf.loadFromHTML(document.querySelectorAll('.page'));
-    function upd() { document.getElementById('pg').innerText = 'Page ' + (pf.getCurrentPageIndex()+1) + ' of ' + pf.getPageCount(); }
-    pf.on('flip', upd); upd();
-  <\/script>
-</body>
-</html>`;
-
-            const blob = new Blob([standaloneHTML], { type: 'text/html' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = safeFileName + '.html';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
         }
     </script>
+
 </body>
 </html>
