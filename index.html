@@ -244,9 +244,10 @@
     </header>
 
     <div class="top-bar">
-        <button class="btn" onclick="document.getElementById('fileInput').click()">
-            + Select Images
-        </button>
+        <button class="btn" onclick="startOrSelectImages()">
+    Start
+</button>
+<input type="file" id="fileInput" accept="image/*" multiple style="display:none" onchange="createBook(this.files)">
         <input type="file" id="fileInput" accept="image/*" multiple style="display:none" onchange="createBook(this.files)">
 
         <select id="downloadFormat" class="format-select" style="display:none;">
@@ -320,6 +321,27 @@
         let activeElement = null;
         let activePageSide = 'right';
         let startX = 0;
+        function startOrSelectImages() {
+            if (pages.length === 0) {
+                const canvas = document.createElement('canvas');
+                canvas.width = 800; canvas.height = 1100;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#fdfbf7';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                pages.push({ bg: canvas.toDataURL(), elements: [] });
+                
+                currentIndex = 0;
+                document.getElementById('bookContainer').style.display = 'block';
+                document.getElementById('editorBar').style.display = 'flex';
+                document.getElementById('bottomInfo').style.display = 'block';
+                document.getElementById('dlBtn').style.display = 'inline-block';
+                document.getElementById('downloadFormat').style.display = 'inline-block';
+                renderBook('none');
+            } else {
+                document.getElementById('fileInput').click();
+            }
+        }
 
         async function createBook(files) {
             if (!files || files.length === 0) return;
