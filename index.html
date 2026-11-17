@@ -344,6 +344,7 @@
         }
 
         function renderBook(dir) {
+            const bookContainer = document.getElementById('bookContainer');
             const leftSheet = document.getElementById('leftSheet');
             const rightSheet = document.getElementById('rightSheet');
             const leftImg = document.getElementById('leftImg');
@@ -361,16 +362,25 @@
                 rightEl.innerHTML = '';
 
                 if (currentIndex === 0) {
-                    leftImg.style.display = 'none';
-                    leftNum.innerText = '';
-                    
+                    // Sirf Cover Page: Book ko single page width ka kar do aur left page chhupa do
+                    bookContainer.style.maxWidth = '420px';
+                    leftSheet.style.display = 'none';
+                    rightSheet.style.width = '100%';
+                    rightSheet.style.borderLeft = 'none';
+
                     rightImg.src = pages[0].bg;
                     rightImg.style.display = 'block';
                     rightNum.innerText = 'Cover';
                     renderElements(pages[0].elements, rightEl, 0);
                 } else {
-                    const lIdx = currentIndex - 1;
-                    const rIdx = currentIndex;
+                    // Panna palatne par poori 2-page khuli kitaab dikhao
+                    bookContainer.style.maxWidth = '820px';
+                    leftSheet.style.display = 'flex';
+                    rightSheet.style.width = '50%';
+                    rightSheet.style.borderLeft = '1px solid #cbd5e1';
+
+                    const lIdx = currentIndex;
+                    const rIdx = currentIndex + 1;
 
                     if (pages[lIdx]) {
                         leftImg.src = pages[lIdx].bg;
@@ -553,15 +563,17 @@ function updateActiveTextContent() {
         bookBox.addEventListener('mouseup', e => { handleSwipe(startX - e.clientX); });
 
         function handleSwipe(diff) {
-            if (diff > 40) {
+            if (diff > 30) {
+                // Aage ka panna palto
                 if (currentIndex === 0 && pages.length > 1) { 
                     currentIndex = 1; 
                     renderBook('next'); 
-                } else if (currentIndex > 0 && currentIndex + 1 < pages.length) { 
+                } else if (currentIndex > 0 && currentIndex + 2 < pages.length) { 
                     currentIndex += 2; 
                     renderBook('next'); 
                 }
-            } else if (diff < -40) {
+            } else if (diff < -30) {
+                // Peeche ka panna palto
                 if (currentIndex === 1) { 
                     currentIndex = 0; 
                     renderBook('prev'); 
@@ -583,7 +595,8 @@ function updateActiveTextContent() {
                     if (idx > 0) pdf.addPage();
                     const pdfWidth = pdf.internal.pageSize.getWidth();
                     const pdfHeight = pdf.internal.pageSize.getHeight();
-                    pdf.addImage(pageData.bg, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+                    const imgType = pageData.bg.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+                    pdf.addImage(pageData.bg, imgType, 0, 0, pdfWidth, pdfHeight);
                 });
                 pdf.save('My-Digital-Book.pdf');
             } else {
