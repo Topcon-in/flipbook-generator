@@ -1,276 +1,207 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3D Flipbook Generator - Client Side</title>
-  <!-- Tailwind CSS for modern styling -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- PageFlip Library -->
-  <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
-  <!-- PDF.js Library -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-  <script>
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-  </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Online Image Flipbook Generator - Create Digital Books</title>
+    <meta name="description" content="Create stunning page-turn digital flipbooks from your images for free using this online flipbook generator tool. Fast, easy, and mobile-friendly.">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            background-color: #f4f7f6;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h1 {
+            color: #2c3e50;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .upload-section {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        input[type="file"] {
+            padding: 10px;
+            border: 1px dashed #3498db;
+            border-radius: 5px;
+            cursor: pointer;
+            background: #ecf0f1;
+            width: 100%;
+        }
+        .viewer-section {
+            text-align: center;
+            margin: 20px 0;
+            min-height: 350px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            background: #fafafa;
+            position: relative;
+            overflow: hidden;
+        }
+        .viewer-section img {
+            max-width: 100%;
+            max-height: 400px;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        .page-info {
+            margin-top: 10px;
+            font-weight: bold;
+            color: #7f8c8d;
+        }
+        .seo-content {
+            margin-top: 40px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        .seo-content h2 {
+            font-size: 1.4rem;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .seo-content p {
+            margin-bottom: 10px;
+            color: #555;
+            font-size: 0.95rem;
+        }
+    </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col items-center justify-between p-4">
+<body>
 
-  <!-- Header -->
-  <header class="w-full max-w-4xl flex flex-col sm:flex-row items-center justify-between py-4 border-b border-slate-800 gap-4">
-    <h1 class="text-2xl font-black tracking-wider text-amber-400">FLIPBOOK STUDIO 3D</h1>
-    <div class="flex items-center gap-3">
-      <button onclick="window.loadSampleBook()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-4 py-2 rounded-lg transition shadow-lg cursor-pointer">
-        Try Demo Book
-      </button>
-      <label class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-4 py-2 rounded-lg cursor-pointer transition border border-slate-700">
-        Upload PDF / Images
-        <input type="file" id="fileInput" accept="image/*,.pdf,application/pdf" multiple class="hidden">
-      </label>
+    <header>
+        <h1>Free Online Image Flipbook Generator</h1>
+        <p>Convert your images into an interactive digital book instantly.</p>
+    </header>
+
+    <div class="container">
+        <!-- Upload Section -->
+        <div class="upload-section">
+            <label for="imageUpload" style="display:block; margin-bottom:8px; font-weight:bold;">Select Multiple Images for Flipbook:</label>
+            <input type="file" id="imageUpload" multiple accept="image/*">
+        </div>
+
+        <!-- Flipbook Viewer Section -->
+        <div class="viewer-section" id="viewerContainer">
+            <p id="placeholderText" style="color: #888;">Please upload images to start your flipbook.</p>
+            <img id="flipImage" src="" alt="Flipbook Page" style="display: none;">
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button id="prevBtn" disabled>Previous</button>
+            <button id="nextBtn" disabled>Next</button>
+        </div>
+        <div class="page-info" id="pageInfo"></div>
+
+        <!-- SEO Content Section for Google Ranking -->
+        <div class="seo-content">
+            <h2>About Free Online Flipbook Tool</h2>
+            <p>Welcome to the best free online flipbook generator tool. This platform allows content creators, students, and businesses to turn ordinary images into a smooth, page-turning digital flipbook experience without needing any complex software or coding skills.</p>
+            <h2>How to Use This Tool?</h2>
+            <p>1. Click on the upload button above and select multiple image files from your device.<br>
+               2. Use the <strong>Next</strong> and <strong>Previous</strong> buttons to navigate through your uploaded pages.<br>
+               3. Enjoy a seamless digital reading experience right inside your browser!</p>
+        </div>
     </div>
-  </header>
 
-  <!-- Main Viewer Area -->
-  <main class="w-full max-w-5xl flex-1 flex flex-col items-center justify-center relative my-8">
-    
-    <!-- Loader Overlay -->
-    <div id="loader" class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center hidden">
-      <div class="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-      <p id="loaderText" class="text-slate-300 font-medium">Processing book...</p>
-    </div>
+    <script>
+        const imageUpload = document.getElementById('imageUpload');
+        const flipImage = document.getElementById('flipImage');
+        const placeholderText = document.getElementById('placeholderText');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const pageInfo = document.getElementById('pageInfo');
 
-    <!-- Flipbook Container -->
-    <div id="flipbookWrapper" class="w-full flex items-center justify-center overflow-hidden py-6">
-      <div id="flipbook"></div>
-    </div>
+        let imageFiles = [];
+        let currentIndex = 0;
 
-    <!-- Controls / Navigation -->
-    <div class="flex items-center gap-6 mt-6 bg-slate-800/60 backdrop-blur px-6 py-3 rounded-full border border-slate-700/50 shadow-xl">
-      <button id="prevBtn" class="hover:text-amber-400 font-bold transition disabled:opacity-30 cursor-pointer">◀️ Prev</button>
-      <span id="pageIndicator" class="text-sm font-semibold tracking-wide text-slate-300">Page 0 of 0</span>
-      <button id="nextBtn" class="hover:text-amber-400 font-bold transition disabled:opacity-30 cursor-pointer">Next ▶️</button>
-    </div>
-  </main>
-
-  <!-- Footer -->
-  <footer class="text-xs text-slate-500 py-2">
-    Client-side 3D Flipbook Engine • Zero Server Uploads Required
-  </footer>
-
-  <!-- Core Application Script -->
-  <script>
-    let pageFlip = null;
-    const fileInput = document.getElementById('fileInput');
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    const pageIndicator = document.getElementById('pageIndicator');
-    const loader = document.getElementById('loader');
-    const loaderText = document.getElementById('loaderText');
-    const bookEl = document.getElementById('flipbook');
-
-    function showLoader(text) {
-      loaderText.textContent = text;
-      loader.classList.remove('hidden');
-    }
-
-    function hideLoader() {
-      loader.classList.add('hidden');
-    }
-
-    // Web Audio API for page flip sound effects
-    function playFlipSound() {
-      try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        oscillator.type = 'triangle';
-        oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
-        oscillator.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.1);
-        gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        oscillator.start();
-        oscillator.stop(audioCtx.currentTime + 0.1);
-      } catch (e) {
-        // Ignore audio context restrictions before user gesture
-      }
-    }
-
-    // Initialize Demo Sample Book
-    window.loadSampleBook = function() {
-      try {
-        showLoader("Loading Demo Book...");
-        const titles = [
-          {
-            title: "THE MIDNIGHT ARCHIVE",
-            sub: "Interactive 3D Flipbook Demo\nSwipe or Drag Corner to Turn Page",
-            bg: "#0f172a",
-            fg: "#f8fafc"
-          },
-          {
-            title: "Chapter 1: The Locked Door",
-            sub: "Every page turns with realistic 3D shadows and paper physics.\nUpload your own PDF or multiple photos to begin.",
-            bg: "#fffbeb",
-            fg: "#1e293b"
-          },
-          {
-            title: "Chapter 2: Mobile Touch Ready",
-            sub: "Designed specifically for smartphones and tablets.\nJust swipe your finger from right to left like a real book.",
-            bg: "#f8fafc",
-            fg: "#1e293b"
-          }
-        ];
-
-        const pages = titles.map((t) => {
-          const canvas = document.createElement('canvas');
-          canvas.width = 600;
-          canvas.height = 800;
-          const ctx = canvas.getContext('2d');
-          
-          ctx.fillStyle = t.bg;
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-          
-          ctx.fillStyle = t.fg;
-          ctx.font = "bold 36px sans-serif";
-          ctx.textAlign = "center";
-          ctx.fillText(t.title, canvas.width / 2, 300);
-          
-          ctx.font = "20px sans-serif";
-          const lines = t.sub.split('\n');
-          lines.forEach((line, idx) => {
-            ctx.fillText(line, canvas.width / 2, 400 + (idx * 30));
-          });
-
-          return { src: canvas.toDataURL() };
+        imageUpload.addEventListener('change', function(event) {
+            const files = event.target.files;
+            if (files.length > 0) {
+                imageFiles = Array.from(files);
+                currentIndex = 0;
+                displayImage();
+            }
         });
 
-        renderFlipbook(pages);
-        hideLoader();
-      } catch (err) {
-        hideLoader();
-        console.error(err);
-        alert("Demo Error: " + err.message);
-      }
-    };
+        function displayImage() {
+            if (imageFiles.length > 0) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    flipImage.src = e.target.result;
+                    flipImage.style.display = 'block';
+                    placeholderText.style.display = 'none';
+                }
+                reader.readAsDataURL(imageFiles[currentIndex]);
 
-    function updateIndicator(currentIndex, total) {
-      if (pageIndicator) {
-        pageIndicator.textContent = Page ${currentIndex + 1} of ${total};
-      }
-    }
-
-    function renderFlipbook(pages) {
-      // Safe check for PageFlip constructor across different library bundles
-      const FlipConstructor = window.PageFlip || (window.St && window.St.PageFlip);
-      if (!FlipConstructor) {
-        throw new Error("PageFlip library failed to load from CDN. Check your internet connection.");
-      }
-
-      if (pageFlip) {
-        pageFlip.destroy();
-      }
-
-      bookEl.innerHTML = '';
-      pages.forEach((p, index) => {
-        const pageDiv = document.createElement('div');
-        pageDiv.className = 'page';
-        if (index === 0 || index === pages.length - 1) {
-          pageDiv.setAttribute('data-density', 'hard');
-        }
-        const img = document.createElement('img');
-        img.src = p.src;
-        img.alt = Book Page ${index + 1};
-        img.style.width = '100%';
-        img.style.height = '100%';
-        img.style.objectFit = 'contain';
-        pageDiv.appendChild(img);
-        bookEl.appendChild(pageDiv);
-      });
-
-      const isMobile = window.innerWidth < 768;
-      const pageWidth = isMobile ? Math.min(window.innerWidth - 40, 350) : 450;
-      const pageHeight = pageWidth * 1.33;
-
-      pageFlip = new FlipConstructor(bookEl, {
-        width: pageWidth,
-        height: pageHeight,
-        size: isMobile ? "fixed" : "stretch",
-        minWidth: 300,
-        maxWidth: 600,
-        minHeight: 400,
-        maxHeight: 800,
-        maxShadowOpacity: 0.5,
-        showCover: true,
-        mobileScrollSupport: true
-      });
-
-      pageFlip.loadFromImages(pages.map(p => p.src));
-
-      pageFlip.on('flip', (e) => {
-        playFlipSound();
-        updateIndicator(e.data, pages.length);
-      });
-
-      updateIndicator(0, pages.length);
-    }
-
-    // File input handler for images/PDFs
-    fileInput.addEventListener('change', async (e) => {
-      const files = Array.from(e.target.files);
-      if (files.length === 0) return;
-
-      showLoader(Processing ${files.length} file(s)...);
-      let pages = [];
-
-      try {
-        for (const file of files) {
-          if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
-            const arrayBuffer = await file.arrayBuffer();
-            const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-            const pdf = await loadingTask.promise;
-            for (let i = 1; i <= pdf.numPages; i++) {
-              const page = await pdf.getPage(i);
-              const viewport = page.getViewport({ scale: 1.5 });
-              const canvas = document.createElement('canvas');
-              const context = canvas.getContext('2d');
-              canvas.height = viewport.height;
-              canvas.width = viewport.width;
-              await page.render({ canvasContext: context, viewport: viewport }).promise;
-              pages.push({ src: canvas.toDataURL() });
+                pageInfo.textContent = Page ${currentIndex + 1} of ${imageFiles.length};
+                
+                prevBtn.disabled = currentIndex === 0;
+                nextBtn.disabled = currentIndex === imageFiles.length - 1;
             }
-          } else if (file.type.startsWith('image/') || file.name.match(/\.(jpg|jpeg|png|webp)$/i)) {
-            const src = await new Promise((resolve) => {
-              const reader = new FileReader();
-              reader.onload = (event) => resolve(event.target.result);
-              reader.readAsDataURL(file);
-            });
-            pages.push({ src });
-          }
         }
 
-        if (pages.length > 0) {
-          renderFlipbook(pages);
-        } else {
-          alert("No valid images or PDF pages found.");
-        }
-      } catch (err) {
-        console.error(err);
-        alert("Processing Error: " + err.message);
-      } finally {
-        hideLoader();
-        fileInput.value = ''; // Reset input so same file can be selected again
-      }
-    });
+        prevBtn.addEventListener('click', function() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                displayImage();
+            }
+        });
 
-    // Navigation buttons
-    prevBtn.addEventListener('click', () => {
-      if (pageFlip) pageFlip.flipPrev();
-    });
+        nextBtn.addEventListener('click', function() {
+            if (currentIndex < imageFiles.length - 1) {
+                currentIndex++;
+                displayImage();
+            }
+        });
+    </script>
 
-    nextBtn.addEventListener('click', () => {
-      if (pageFlip) pageFlip.flipNext();
-    });
-  </script>
 </body>
 </html>
