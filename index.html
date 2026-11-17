@@ -60,6 +60,7 @@
             background: #fafafa;
             position: relative;
             overflow: hidden;
+            padding: 10px;
         }
         .viewer-section img {
             max-width: 100%;
@@ -95,6 +96,7 @@
             margin-top: 10px;
             font-weight: bold;
             color: #7f8c8d;
+            text-align: center;
         }
         .seo-content {
             margin-top: 40px;
@@ -173,13 +175,12 @@
 
         function displayImage() {
             if (imageFiles.length > 0) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    flipImage.src = e.target.result;
-                    flipImage.style.display = 'block';
-                    placeholderText.style.display = 'none';
-                }
-                reader.readAsDataURL(imageFiles[currentIndex]);
+                const file = imageFiles[currentIndex];
+                const imageURL = URL.createObjectURL(file);
+                
+                flipImage.src = imageURL;
+                flipImage.style.display = 'block';
+                placeholderText.style.display = 'none';
 
                 pageInfo.textContent = Page ${currentIndex + 1} of ${imageFiles.length};
                 
