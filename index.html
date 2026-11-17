@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Digital Book Studio - Create 3D Flipbooks & E-Books Online</title>
-    <meta name="description" content="Turn images and photos into realistic 3D page-turning interactive digital books and PDFs online. Add custom text, graphics, and download offline eBooks instantly.">
+    <title>Interactive Digital Book Studio - 3D Flipbook & E-Book Maker</title>
+    <meta name="description" content="Create realistic 3D page-turning interactive digital books and PDFs online. Add custom text, fonts, graphics, and download offline eBooks instantly.">
     <!-- jsPDF for PDF Export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
@@ -95,7 +95,8 @@
             cursor: pointer;
             background: none;
         }
-/* Book Container */
+
+        /* Book Container (16:9 Landscape Optimized) */
         .book-container {
             display: none;
             width: 100%;
@@ -205,6 +206,21 @@
             font-size: 0.9rem;
         }
 
+        /* Mobile Auto-Fit & 16:9 Optimization */
+        @media (max-width: 768px) {
+            .book-container {
+                height: 270px !important;
+                padding: 6px;
+            }
+            .editor-bar {
+                padding: 6px;
+                gap: 6px;
+            }
+            .editor-bar input[type="text"] {
+                width: 120px;
+            }
+        }
+
         /* SEO Optimized Content Section */
         .seo-section {
             max-width: 820px;
@@ -215,7 +231,7 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             text-align: left;
         }
-.seo-section h2 {
+        .seo-section h2 {
             font-size: 1.4rem;
             color: #818cf8;
             margin-bottom: 12px;
@@ -234,10 +250,6 @@
         }
         .seo-section ul {
             padding-left: 20px;
-        }
-
-        @media (max-width: 600px) {
-            .book-container { height: 320px; padding: 8px; }
         }
     </style>
 </head>
@@ -264,14 +276,18 @@
         </button>
     </div>
 
-    <!-- Text & Element Editing Toolbar -->
+    <!-- Text & Element Editing Toolbar with Multiple Fonts -->
     <div class="editor-bar" id="editorBar">
         <input type="text" id="elemTextInput" placeholder="Type text..." oninput="updateActiveTextContent()">
         <select id="fontSelect" onchange="updateActiveFont()">
-            <option value="sans-serif">Sans-Serif</option>
-            <option value="serif">Serif</option>
-            <option value="monospace">Monospace</option>
-            <option value="cursive">Cursive</option>
+            <option value="Segoe UI, sans-serif">Standard (Segoe UI)</option>
+            <option value="Arial, sans-serif">Arial</option>
+            <option value="Georgia, serif">Georgia</option>
+            <option value="Courier New, monospace">Courier New</option>
+            <option value="Times New Roman, serif">Times New Roman</option>
+            <option value="Verdana, sans-serif">Verdana</option>
+            <option value="Impact, sans-serif">Impact (Bold)</option>
+            <option value="Cursive">Cursive</option>
         </select>
         <input type="color" id="fontColor" value="#000000" onchange="updateActiveColor()" title="Text Color">
         
@@ -312,7 +328,7 @@
         <ul>
             <li><strong>Original Image Quality Preservation:</strong> Upload high-resolution photos and illustrations without losing quality or clarity.</li>
             <li><strong>Interactive Page Flipping:</strong> Realistic 2-page open book spread with smooth slide and drag navigation, featuring a dedicated cover page layout.</li>
-            <li><strong>Advanced Custom Editing:</strong> Easily add custom text overlays, choose from multiple font styles, customize text colors, and insert extra images anywhere on any page with adjustable sizes.</li>
+            <li><strong>Advanced Custom Editing:</strong> Easily add custom text overlays, choose from multiple font styles (Arial, Georgia, Times New Roman, etc.), customize text colors, and insert extra images anywhere on any page with adjustable sizes.</li>
             <li><strong>Offline Export Options:</strong> Download your finished creation either as a professional, standard <strong>Complete PDF</strong> document or as an <strong>Interactive HTML eBook</strong> that works fully offline without needing an internet connection.</li>
             <li><strong>Ready to Share & Sell:</strong> Perfect for publishing e-books on digital marketplaces, sharing portfolios with clients, or creating interactive online catalogues.</li>
         </ul>
@@ -343,7 +359,8 @@
                 });
                 pages.push({ bg: dataUrl, elements: [] });
             }
-currentIndex = 0;
+
+            currentIndex = 0;
             document.getElementById('bookContainer').style.display = 'block';
             document.getElementById('editorBar').style.display = 'flex';
             document.getElementById('bottomInfo').style.display = 'block';
@@ -427,7 +444,7 @@ currentIndex = 0;
                 content: 'Double Click to Edit',
                 x: 40, y: 40,
                 width: 180, height: 40,
-                font: 'sans-serif',
+                font: 'Segoe UI, sans-serif',
                 color: '#000000',
                 size: 20
             });
@@ -491,7 +508,7 @@ currentIndex = 0;
                     div.style.left = el.x + 'px';
                     div.style.top = el.y + 'px';
                 };
-                div.onclick = function(e) {
+div.onclick = function(e) {
                     e.stopPropagation();
                     setActiveElement(el, div);
                 };
@@ -607,7 +624,9 @@ currentIndex = 0;
   .left .page-num { left: 12px; } .right .page-num { right: 12px; }
   .flip-r { transform: rotateY(-65deg); opacity: 0.3; } .flip-l { transform: rotateY(65deg); opacity: 0.3; }
   .hint { margin-top: 15px; color: #cbd5e1; font-size: 0.9rem; text-align: center; }
-  @media (max-width: 600px) { .book-container { height: 320px; padding: 8px; } }
+  @media (max-width: 768px) {
+      .book-container { height: 270px !important; padding: 6px; }
+  }
 </style>
 </head>
 <body>
