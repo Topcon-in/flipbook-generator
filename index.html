@@ -96,7 +96,7 @@
             background: none;
         }
 
-        /* Book Container (16:9 Landscape Optimized) */
+        /* Book Container */
         .book-container {
             display: none;
             width: 100%;
@@ -221,7 +221,6 @@
             }
         }
 
-        /* SEO Optimized Content Section */
         .seo-section {
             max-width: 820px;
             margin-top: 40px;
@@ -231,26 +230,10 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             text-align: left;
         }
-        .seo-section h2 {
-            font-size: 1.4rem;
-            color: #818cf8;
-            margin-bottom: 12px;
-        }
-        .seo-section h3 {
-            font-size: 1.1rem;
-            color: #cbd5e1;
-            margin-top: 18px;
-            margin-bottom: 8px;
-        }
-        .seo-section p, .seo-section li {
-            color: #94a3b8;
-            font-size: 0.95rem;
-            line-height: 1.6;
-            margin-bottom: 8px;
-        }
-        .seo-section ul {
-            padding-left: 20px;
-        }
+        .seo-section h2 { font-size: 1.4rem; color: #818cf8; margin-bottom: 12px; }
+        .seo-section h3 { font-size: 1.1rem; color: #cbd5e1; margin-top: 18px; margin-bottom: 8px; }
+        .seo-section p, .seo-section li { color: #94a3b8; font-size: 0.95rem; line-height: 1.6; margin-bottom: 8px; }
+        .seo-section ul { padding-left: 20px; }
     </style>
 </head>
 <body>
@@ -276,7 +259,7 @@
         </button>
     </div>
 
-    <!-- Text & Element Editing Toolbar with Multiple Fonts -->
+    <!-- Text & Element Editing Toolbar -->
     <div class="editor-bar" id="editorBar">
         <input type="text" id="elemTextInput" placeholder="Type text..." oninput="updateActiveTextContent()">
         <select id="fontSelect" onchange="updateActiveFont()">
@@ -319,30 +302,21 @@
         Slide left or right on the book to turn pages (Click any added text/image to edit or drag)
     </div>
 
-    <!-- SEO Optimized Information & Keywords Section -->
     <section class="seo-section">
         <h2>About Online Digital Book Creator & 3D Flipbook Studio</h2>
         <p>Welcome to the ultimate web-based <strong>Interactive Digital Book Creator</strong> designed for authors, creators, marketers, and students. Transform your raw images, photo albums, portfolios, and scanned documents into a professional, high-definition <strong>3D page-turning digital book</strong> right inside your browser without installing any heavy software.</p>
-
         <h3>Key Features & Capabilities</h3>
         <ul>
             <li><strong>Original Image Quality Preservation:</strong> Upload high-resolution photos and illustrations without losing quality or clarity.</li>
             <li><strong>Interactive Page Flipping:</strong> Realistic 2-page open book spread with smooth slide and drag navigation, featuring a dedicated cover page layout.</li>
-            <li><strong>Advanced Custom Editing:</strong> Easily add custom text overlays, choose from multiple font styles (Arial, Georgia, Times New Roman, etc.), customize text colors, and insert extra images anywhere on any page with adjustable sizes.</li>
+            <li><strong>Advanced Custom Editing:</strong> Easily add custom text overlays, choose from multiple font styles, customize text colors, and insert extra images anywhere on any page with adjustable sizes.</li>
             <li><strong>Offline Export Options:</strong> Download your finished creation either as a professional, standard <strong>Complete PDF</strong> document or as an <strong>Interactive HTML eBook</strong> that works fully offline without needing an internet connection.</li>
-            <li><strong>Ready to Share & Sell:</strong> Perfect for publishing e-books on digital marketplaces, sharing portfolios with clients, or creating interactive online catalogues.</li>
         </ul>
-
-        <h3>How to Create Your Digital Flipbook in Seconds</h3>
-        <p>1. Click on <strong>"+ Select Images"</strong> to upload your image files.<br>
-        2. Use the editing toolbar to place text, titles, or extra graphics on your cover and inner pages.<br>
-        3. Slide through your book to preview the realistic 3D book spread.<br>
-        4. Select your preferred format (PDF or Interactive eBook) from the dropdown and click <strong>"Download Book"</strong> to save your offline file instantly!</p>
     </section>
 
     <script>
         let pages = [];
-        let currentIndex = 0;
+        let currentIndex = 0; // 0 means Cover Page alone on right
         let activeElement = null;
         let activePageSide = 'right';
         let startX = 0;
@@ -392,11 +366,11 @@
                     
                     rightImg.src = pages[0].bg;
                     rightImg.style.display = 'block';
-                    rightNum.innerText = 'Cover (1)';
+                    rightNum.innerText = 'Cover';
                     renderElements(pages[0].elements, rightEl, 0);
                 } else {
-                    const lIdx = currentIndex;
-                    const rIdx = currentIndex + 1;
+                    const lIdx = currentIndex - 1;
+                    const rIdx = currentIndex;
 
                     if (pages[lIdx]) {
                         leftImg.src = pages[lIdx].bg;
@@ -431,7 +405,7 @@
 
         function getCurrentPageIdx() {
             if (currentIndex === 0) return 0;
-            return (activePageSide === 'left') ? currentIndex : currentIndex + 1;
+            return (activePageSide === 'left') ? currentIndex - 1 : currentIndex;
         }
 
         function addTextElement() {
@@ -508,7 +482,8 @@
                     div.style.left = el.x + 'px';
                     div.style.top = el.y + 'px';
                 };
-div.onclick = function(e) {
+
+                div.onclick = function(e) {
                     e.stopPropagation();
                     setActiveElement(el, div);
                 };
@@ -534,7 +509,7 @@ div.onclick = function(e) {
             document.getElementById('sizeSlider').value = el.width;
         }
 
-        function updateActiveTextContent() {
+function updateActiveTextContent() {
             if (!selectedElemData || selectedElemData.type !== 'text') return;
             selectedElemData.content = document.getElementById('elemTextInput').value;
             renderBook('none');
@@ -579,11 +554,21 @@ div.onclick = function(e) {
 
         function handleSwipe(diff) {
             if (diff > 40) {
-                if (currentIndex === 0 && pages.length > 1) { currentIndex = 1; renderBook('next'); }
-                else if (currentIndex > 0 && currentIndex + 2 < pages.length) { currentIndex += 2; renderBook('next'); }
+                if (currentIndex === 0 && pages.length > 1) { 
+                    currentIndex = 1; 
+                    renderBook('next'); 
+                } else if (currentIndex > 0 && currentIndex + 1 < pages.length) { 
+                    currentIndex += 2; 
+                    renderBook('next'); 
+                }
             } else if (diff < -40) {
-                if (currentIndex === 1) { currentIndex = 0; renderBook('prev'); }
-                else if (currentIndex > 1) { currentIndex -= 2; renderBook('prev'); }
+                if (currentIndex === 1) { 
+                    currentIndex = 0; 
+                    renderBook('prev'); 
+                } else if (currentIndex > 1) { 
+                    currentIndex -= 2; 
+                    renderBook('prev'); 
+                }
             }
         }
 
@@ -647,10 +632,10 @@ div.onclick = function(e) {
         document.getElementById('re').innerHTML = '';
         if(idx === 0) {
           document.getElementById('li').style.display = 'none'; document.getElementById('ln').innerText = '';
-          document.getElementById('ri').src = p[0].bg; document.getElementById('ri').style.display = 'block'; document.getElementById('rn').innerText = 'Cover (1)';
+          document.getElementById('ri').src = p[0].bg; document.getElementById('ri').style.display = 'block'; document.getElementById('rn').innerText = 'Cover';
           drawEls(p[0].elements, document.getElementById('re'));
         } else {
-          const l = idx, r = idx + 1;
+          const l = idx - 1, r = idx;
           if(p[l]) {
             document.getElementById('li').src = p[l].bg; document.getElementById('li').style.display = 'block'; document.getElementById('ln').innerText = l + 1;
             drawEls(p[l].elements, document.getElementById('le'));
@@ -690,7 +675,7 @@ div.onclick = function(e) {
     function sw(df) {
       if(df>40) {
         if(idx === 0 && p.length > 1) { idx = 1; render('n'); }
-        else if(idx > 0 && idx + 2 < p.length) { idx += 2; render('n'); }
+        else if(idx > 0 && idx + 1 < p.length) { idx += 2; render('n'); }
       } else if(df<-40) {
         if(idx === 1) { idx = 0; render('p'); }
         else if(idx > 1) { idx -= 2; render('p'); }
