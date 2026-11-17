@@ -13,371 +13,84 @@
         header p { font-size: 0.9rem; color: #94a3b8; }
 
         .top-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; align-items: center; }
-        .btn { padding: 10px 20px; background: #2563eb; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.95rem; transition: background 0.2s; }
+        .btn { padding: 10px 20px; background: #2563eb; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.95rem; }
         .btn:hover { background: #1d4ed8; }
         .btn-green { background: #16a34a; }
         .btn-green:hover { background: #15803d; }
 
-        .format-select { padding: 10px; border-radius: 6px; background: #334155; color: #fff; border: 1px solid #475569; font-size: 0.95rem; }
-
-        .book-container { position: relative; width: 820px; height: 550px; background: #fff; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: flex; overflow: hidden; margin-bottom: 15px; }
-        .open-book { width: 100%; height: 100%; display: flex; background: #fff; position: relative; }
-        .open-book::after { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: #cbd5e1; z-index: 10; transform: translateX(-50%); pointer-events: none; }
-        .open-book.hide-crease::after { display: none; }
-
-        .sheet { width: 50%; height: 100%; background: #fdfbf7; position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; overflow: hidden; }
-        .sheet.left { border-right: 1px solid #cbd5e1; transform-origin: right center; transition: transform 0.4s ease; }
-        .sheet.right { border-left: 1px solid #cbd5e1; transform-origin: left center; transition: transform 0.4s ease; }
+        .book-container { position: relative; width: 420px; height: 550px; background: #fff; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: none; flex-direction: column; overflow: hidden; margin-bottom: 15px; color: #000; }
+        .sheet { width: 100%; height: 100%; background: #fdfbf7; position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; text-align: center; }
         
-        .sheet img.bg-img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; user-select: none; }
-        .custom-item { position: absolute; cursor: move; user-select: none; padding: 4px 8px; border: 1px dashed transparent; }
-        .custom-item:hover, .custom-item.selected { border-color: #38bdf8; background: rgba(56, 189, 248, 0.1); }
-        
-        .page-num { position: absolute; bottom: 10px; font-size: 0.8rem; color: #64748b; font-weight: bold; }
-        .left .page-num { left: 15px; }
-        .right .page-num { right: 15px; }
+        .page-num { position: absolute; bottom: 15px; font-size: 0.85rem; color: #64748b; font-weight: bold; right: 20px; }
 
         .editor-bar { display: none; background: #334155; padding: 10px 15px; border-radius: 8px; gap: 10px; align-items: center; margin-bottom: 15px; flex-wrap: wrap; justify-content: center; }
-        .editor-bar input, .editor-bar select { padding: 6px 10px; border-radius: 4px; border: 1px solid #475569; background: #1e293b; color: #fff; }
-        
-        .bottom-info { font-size: 0.85rem; color: #94a3b8; text-align: center; }
+        .editor-bar input { padding: 6px 10px; border-radius: 4px; border: 1px solid #475569; background: #1e293b; color: #fff; width: 200px; }
     </style>
 </head>
 <body>
 
     <header>
         <h1>Interactive Digital Book Studio</h1>
-        <p>Create, Edit, and Download 3D Page-Turning E-Books & PDFs Instantly</p>
+        <p>Create, Edit, and Manage Your Digital Book Instantly</p>
     </header>
 
     <div class="top-bar">
-        <button class="btn btn-green" onclick="startOrSelectImages()">Start</button>
-        <input type="file" id="fileInput" accept="image/*" multiple style="display:none" onchange="createBook(this.files)">
-        
-        <button class="btn" id="addPageBtn" style="display:none; background:#0284c7;" onclick="addNewBlankPage()">+ New Page</button>
-        <button class="btn" id="prevPageBtn" style="display:none; background:#475569;" onclick="changeEditorPage(-1)">&#8592; Prev</button>
-        <button class="btn" id="nextPageBtn" style="display:none; background:#475569;" onclick="changeEditorPage(1)">Next &#8594;</button>
-        <button class="btn" id="previewBtn" style="display:none; background:#d97706;" onclick="togglePreviewMode()">&#128065; Preview Book</button>
-
-        <select id="downloadFormat" class="format-select" style="display:none;">
-            <option value="ebook">Interactive eBook (.HTML)</option>
-            <option value="pdf">Complete PDF (.PDF)</option>
-        </select>
-        <button class="btn" id="dlBtn" style="display:none;" onclick="downloadBook()">Download Book</button>
+        <button class="btn btn-green" onclick="startApp()">Start</button>
+        <button class="btn" id="addPageBtn" style="display:none; background:#0284c7;" onclick="addPage()">+ New Page</button>
+        <button class="btn" id="prevBtn" style="display:none; background:#475569;" onclick="changePage(-1)">&#8592; Prev</button>
+        <button class="btn" id="nextBtn" style="display:none; background:#475569;" onclick="changePage(1)">Next &#8594;</button>
     </div>
 
     <div class="editor-bar" id="editorBar">
-        <input type="text" id="textContent" placeholder="Type text..." style="width: 150px;">
-        <select id="textFont">
-            <option value="sans-serif">Standard (Segoe UI)</option>
-            <option value="serif">Classic (Georgia)</option>
-            <option value="monospace">Mono (Courier)</option>
-        </select>
-        <input type="color" id="textColor" value="#000000" style="width: 35px; height: 32px; padding: 0; cursor: pointer;">
-        <button class="btn" style="padding: 6px 12px; background: #0284c7;" onclick="addText()">+ Add Text</button>
-        <button class="btn" style="padding: 6px 12px; background: #0d9488;" onclick="document.getElementById('imageInput').click()">+ Add Image</button>
-        <input type="file" id="imageInput" accept="image/*" style="display:none" onchange="addImage(this)">
-        <input type="range" id="textSize" min="12" max="72" value="20" style="width: 80px;" oninput="updateTextSize(this.value)">
-        <button class="btn" style="padding: 6px 12px; background: #dc2626;" onclick="deleteActiveElement()">Delete</button>
+        <input type="text" id="pageTextInput" placeholder="Write text for this page..." oninput="updatePageText(this.value)">
     </div>
 
-    <div class="book-container" id="bookContainer" style="display: none;">
-        <div class="open-book hide-crease">
-            <div class="sheet left" id="leftSheet">
-                <img id="leftImg" class="bg-img" style="display:none;">
-                <div id="leftElements" style="position: absolute; inset: 0; pointer-events: none;"></div>
-                <div class="page-num" id="leftNum"></div>
-            </div>
-            <div class="sheet right" id="rightSheet" style="width: 100%;">
-                <img id="rightImg" class="bg-img" style="display:none;">
-                <div id="rightElements" style="position: absolute; inset: 0; pointer-events: none;"></div>
-                <div class="page-num" id="rightNum"></div>
-            </div>
+    <div class="book-container" id="bookContainer">
+        <div class="sheet">
+            <h2 id="pageTitle">Cover Page</h2>
+            <p id="pageDesc" style="margin-top: 15px; color: #334155; font-size: 1.1rem;">Welcome to your digital book!</p>
+            <div class="page-num" id="pageNum">Page 1</div>
         </div>
     </div>
 
-    <div class="bottom-info" id="bottomInfo" style="display: none;">
-        Tip: Click elements to select, drag to move. Use controls to format text.
-    </div>
-
-    <!-- Required Libraries for PDF & Export -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
     <script>
-        let pages = [];
-        let currentIndex = 0; 
-        let activeElement = null;
-        let activePageSide = 'right';
-        let startX = 0, startY = 0;
-        let isPreviewMode = false;
+        let pages = [{ title: "Cover Page", text: "Welcome to your digital book!" }];
+        let currentIdx = 0;
 
-        function startOrSelectImages() {
-            if (pages.length === 0) {
-                addNewBlankPage();
-            } else {
-                document.getElementById('fileInput').click();
-            }
-        }
-
-        function addNewBlankPage() {
-            const canvas = document.createElement('canvas');
-            canvas.width = 800; canvas.height = 1100;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#fdfbf7';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            pages.push({ bg: canvas.toDataURL(), elements: [] });
-            currentIndex = pages.length - 1;
-            isPreviewMode = false;
-
+        function startApp() {
             document.getElementById('bookContainer').style.display = 'flex';
             document.getElementById('editorBar').style.display = 'flex';
-            document.getElementById('bottomInfo').style.display = 'block';
             document.getElementById('addPageBtn').style.display = 'inline-block';
-            document.getElementById('prevPageBtn').style.display = 'inline-block';
-            document.getElementById('nextPageBtn').style.display = 'inline-block';
-            document.getElementById('previewBtn').style.display = 'inline-block';
-            document.getElementById('dlBtn').style.display = 'inline-block';
-            document.getElementById('downloadFormat').style.display = 'inline-block';
-            renderBook('none');
+            document.getElementById('prevBtn').style.display = 'inline-block';
+            document.getElementById('nextBtn').style.display = 'inline-block';
+            renderPage();
         }
 
-        function changeEditorPage(step) {
-            const newIdx = currentIndex + step;
+        function addPage() {
+            pages.push({ title: Page ${pages.length + 1}, text: "Type your content here..." });
+            currentIdx = pages.length - 1;
+            renderPage();
+        }
+
+        function changePage(direction) {
+            const newIdx = currentIdx + direction;
             if (newIdx >= 0 && newIdx < pages.length) {
-                currentIndex = newIdx;
-                renderBook('none');
+                currentIdx = newIdx;
+                renderPage();
             }
         }
 
-        function togglePreviewMode() {
-            isPreviewMode = !isPreviewMode;
-            const btn = document.getElementById('previewBtn');
-            const editorBar = document.getElementById('editorBar');
-            const navBtns = ['addPageBtn', 'prevPageBtn', 'nextPageBtn'];
-
-            if (isPreviewMode) {
-                btn.innerHTML = '&#9998; Back to Edit';
-                editorBar.style.display = 'none';
-                navBtns.forEach(id => document.getElementById(id).style.display = 'none');
-                currentIndex = 0; 
-            } else {
-                btn.innerHTML = '&#128065; Preview Book';
-                editorBar.style.display = 'flex';
-                navBtns.forEach(id => document.getElementById(id).style.display = 'inline-block');
-            }
-            renderBook('none');
+        function updatePageText(val) {
+            pages[currentIdx].text = val;
+            document.getElementById('pageDesc').innerText = val;
         }
 
-        function getCurrentPageIdx() {
-            if (!isPreviewMode) return currentIndex;
-            if (currentIndex === 0) return 0;
-            return activePageSide === 'left' ? currentIndex : currentIndex + 1;
-        }
-
-        async function createBook(files) {
-            if (!files || files.length === 0) return;
-            for (let i = 0; i < files.length; i++) {
-                const dataUrl = await new Promise(resolve => {
-                    const reader = new FileReader();
-                    reader.onload = e => resolve(e.target.result);
-                    reader.readAsDataURL(files[i]);
-                });
-                pages.push({ bg: dataUrl, elements: [] });
-            }
-            currentIndex = 0;
-            isPreviewMode = false;
-            document.getElementById('bookContainer').style.display = 'flex';
-            document.getElementById('editorBar').style.display = 'flex';
-            document.getElementById('bottomInfo').style.display = 'block';
-            document.getElementById('addPageBtn').style.display = 'inline-block';
-            document.getElementById('prevPageBtn').style.display = 'inline-block';
-            document.getElementById('nextPageBtn').style.display = 'inline-block';
-            document.getElementById('previewBtn').style.display = 'inline-block';
-            document.getElementById('dlBtn').style.display = 'inline-block';
-            document.getElementById('downloadFormat').style.display = 'inline-block';
-            renderBook('none');
-        }
-
-        function renderBook(dir) {
-            const bookContainer = document.getElementById('bookContainer');
-            const openBook = document.querySelector('.open-book');
-            const leftSheet = document.getElementById('leftSheet');
-            const rightSheet = document.getElementById('rightSheet');
-            const leftImg = document.getElementById('leftImg');
-            const rightImg = document.getElementById('rightImg');
-            const leftEl = document.getElementById('leftElements');
-            const rightEl = document.getElementById('rightElements');
-            const leftNum = document.getElementById('leftNum');
-            const rightNum = document.getElementById('rightNum');
-
-            if (dir === 'next') rightSheet.classList.add('flip-right-out');
-            if (dir === 'prev') leftSheet.classList.add('flip-left-out');
-
-            setTimeout(() => {
-                leftEl.innerHTML = '';
-                rightEl.innerHTML = '';
-
-                if (!isPreviewMode) {
-                    openBook.classList.add('hide-crease');
-                    bookContainer.style.maxWidth = '420px';
-                    leftSheet.style.display = 'none';
-                    rightSheet.style.width = '100%';
-                    rightSheet.style.borderLeft = 'none';
-                    activePageSide = 'right';
-
-                    rightImg.src = pages[currentIndex].bg;
-                    rightImg.style.display = 'block';
-                    rightNum.innerText = currentIndex === 0 ? 'Cover (Page 1)' : Page ${currentIndex + 1} of ${pages.length};
-                    renderElements(pages[currentIndex].elements, rightEl, currentIndex);
-                } else {
-                    openBook.classList.remove('hide-crease');
-                    if (currentIndex === 0) {
-                        bookContainer.style.maxWidth = '420px';
-                        leftSheet.style.display = 'none';
-                        rightSheet.style.width = '100%';
-                        rightSheet.style.borderLeft = 'none';
-
-                        rightImg.src = pages[0].bg;
-                        rightImg.style.display = 'block';
-                        rightNum.innerText = 'Cover';
-                        renderElements(pages[0].elements, rightEl, 0);
-                    } else {
-                        bookContainer.style.maxWidth = '820px';
-                        leftSheet.style.display = 'flex';
-                        rightSheet.style.width = '50%';
-                        rightSheet.style.borderLeft = '1px solid #cbd5e1';
-
-                        const lIdx = currentIndex;
-                        const rIdx = currentIndex + 1;
-
-                        if (pages[lIdx]) {
-                            leftImg.src = pages[lIdx].bg;
-                            leftImg.style.display = 'block';
-                            leftNum.innerText = lIdx + 1;
-                            renderElements(pages[lIdx].elements, leftEl, lIdx);
-                        } else { leftImg.style.display = 'none'; leftNum.innerText = ''; }
-
-                        if (pages[rIdx]) {
-                            rightImg.src = pages[rIdx].bg;
-                            rightImg.style.display = 'block';
-                            rightNum.innerText = rIdx + 1;
-                            renderElements(pages[rIdx].elements, rightEl, rIdx);
-                        } else { rightImg.style.display = 'none'; rightNum.innerText = ''; }
-                    }
-                }
-                rightSheet.classList.remove('flip-right-out');
-                leftSheet.classList.remove('flip-left-out');
-            }, dir === 'none' ? 0 : 220);
-        }
-
-        function renderElements(elements, container, pageIdx) {
-            elements.forEach((el, idx) => {
-                const div = document.createElement('div');
-                div.className = 'custom-item';
-                div.style.left = el.x + 'px';
-                div.style.top = el.y + 'px';
-                div.style.pointerEvents = 'auto';
-
-                if (el.type === 'text') {
-                    div.innerText = el.content;
-                    div.style.fontFamily = el.font;
-                    div.style.color = el.color;
-                    div.style.fontSize = el.size + 'px';
-                    div.style.fontWeight = 'bold';
-                } else if (el.type === 'image') {
-                    const img = document.createElement('img');
-                    img.src = el.content;
-                    img.style.width = (el.width || 120) + 'px';
-                    img.style.height = 'auto';
-                    img.style.display = 'block';
-                    div.appendChild(img);
-                }
-
-                div.onmousedown = (e) => {
-                    e.stopPropagation();
-                    selectElement(div, el, pageIdx, container === document.getElementById('leftElements') ? 'left' : 'right');
-                    startX = e.clientX - el.x;
-                    startY = e.clientY - el.y;
-
-                    document.onmousemove = (em) => {
-                        el.x = em.clientX - startX;
-                        el.y = em.clientY - startY;
-                        div.style.left = el.x + 'px';
-                        div.style.top = el.y + 'px';
-                    };
-                    document.onmouseup = () => { document.onmousemove = null; document.onmouseup = null; };
-                };
-                container.appendChild(div);
-            });
-        }
-
-        function selectElement(div, el, pageIdx, side) {
-            document.querySelectorAll('.custom-item').forEach(i => i.classList.remove('selected'));
-            div.classList.add('selected');
-            activeElement = el;
-            activePageSide = side;
-            if (el.type === 'text') {
-                document.getElementById('textContent').value = el.content;
-                document.getElementById('textFont').value = el.font;
-                document.getElementById('textColor').value = el.color;
-                document.getElementById('textSize').value = el.size;
-            }
-        }
-
-        function addText() {
-            const text = document.getElementById('textContent').value;
-            if (!text) return;
-            const pIdx = getCurrentPageIdx();
-            pages[pIdx].elements.push({
-                type: 'text', content: text,
-                font: document.getElementById('textFont').value,
-                color: document.getElementById('textColor').value,
-                size: parseInt(document.getElementById('textSize').value),
-                x: 50, y: 50
-            });
-            renderBook('none');
-        }
-
-        function addImage(input) {
-            if (!input.files || !input.files[0]) return;
-            const reader = new FileReader();
-            reader.onload = e => {
-                const pIdx = getCurrentPageIdx();
-                pages[pIdx].elements.push({ type: 'image', content: e.target.result, x: 50, y: 50, width: 150 });
-                renderBook('none');
-            };
-            reader.readAsDataURL(input.files[0]);
-        }
-
-        function updateTextSize(val) {
-            if (activeElement && activeElement.type === 'text') {
-                activeElement.size = parseInt(val);
-                renderBook('none');
-            }
-        }
-
-        function deleteActiveElement() {
-            if (!activeElement) return;
-            const pIdx = getCurrentPageIdx();
-            pages[pIdx].elements = pages[pIdx].elements.filter(e => e !== activeElement);
-            activeElement = null;
-            renderBook('none');
-        }
-
-        async function downloadBook() {
-            const format = document.getElementById('downloadFormat').value;
-            if (format === 'ebook') {
-                const htmlContent = <!DOCTYPE html><html><head><meta charset="UTF-8"><title>Digital Book</title></head><body><h1>Interactive Digital Book</h1><p>Total Pages: ${pages.length}</p></body></html>;
-                const blob = new Blob([htmlContent], { type: 'text/html' });
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = 'digital-book.html';
-                link.click();
-            } else {
-                alert('PDF generation is ready!');
-            }
+        function renderPage() {
+            const page = pages[currentIdx];
+            document.getElementById('pageTitle').innerText = page.title;
+            document.getElementById('pageDesc').innerText = page.text;
+            document.getElementById('pageTextInput').value = page.text;
+            document.getElementById('pageNum').innerText = Page ${currentIdx + 1} of ${pages.length};
         }
     </script>
 </body>
