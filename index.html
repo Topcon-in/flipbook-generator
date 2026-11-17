@@ -131,6 +131,7 @@
             background: linear-gradient(to right, rgba(0,0,0,0.02), rgba(0,0,0,0.22) 50%, rgba(0,0,0,0.02));
             pointer-events: none;
             z-index: 10;
+            .open-book.hide-crease::after { display: none; }
         }
         .sheet {
             width: 50%;
@@ -254,7 +255,10 @@
             <option value="ebook">Interactive eBook (.HTML)</option>
             <option value="pdf">Complete PDF (.PDF)</option>
         </select>
-
+                                           <button class="btn" id="addPageBtn" style="display:none; background:#0284c7;" onclick="addNewBlankPage()">+ New Page</button>
+        <button class="btn" id="prevPageBtn" style="display:none; background:#475569;" onclick="changeEditorPage(-1)">&#8592; Prev</button>
+        <button class="btn" id="nextPageBtn" style="display:none; background:#475569;" onclick="changeEditorPage(1)">Next &#8594;</button>
+        <button class="btn" id="previewBtn" style="display:none; background:#d97706;" onclick="togglePreviewMode()">&#128065; Preview Book</button>
         <button class="btn btn-green" id="dlBtn" style="display:none;" onclick="handleDownload()">
             &#11015; Download Book
         </button>
@@ -321,28 +325,74 @@
         let activeElement = null;
         let activePageSide = 'right';
         let startX = 0;
+        let isPreviewMode = false;
+
         function startOrSelectImages() {
             if (pages.length === 0) {
-                const canvas = document.createElement('canvas');
-                canvas.width = 800; canvas.height = 1100;
-                const ctx = canvas.getContext('2d');
-                ctx.fillStyle = '#fdfbf7';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                pages.push({ bg: canvas.toDataURL(), elements: [] });
-                
-                currentIndex = 0;
-                document.getElementById('bookContainer').style.display = 'block';
-                document.getElementById('editorBar').style.display = 'flex';
-                document.getElementById('bottomInfo').style.display = 'block';
-                document.getElementById('dlBtn').style.display = 'inline-block';
-                document.getElementById('downloadFormat').style.display = 'inline-block';
-                renderBook('none');
+                addNewBlankPage();
             } else {
                 document.getElementById('fileInput').click();
             }
         }
 
+        function addNewBlankPage() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 800; canvas.height = 1100;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#fdfbf7';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            pages.push({ bg: canvas.toDataURL(), elements: [] });
+            currentIndex = pages.length - 1;
+            isPreviewMode = false;
+
+            document.getElementById('bookContainer').style.display = 'block';
+            document.getElementById('editorBar').style.display = 'flex';
+            document.getElementById('bottomInfo').style.display = 'block';
+            document.getElementById('addPageBtn').style.display = 'inline-block';
+            document.getElementById('prevPageBtn').style.display = 'inline-block';
+            document.getElementById('nextPageBtn').style.display = 'inline-block';
+            document.getElementById('previewBtn').style.display = 'inline-block';
+            document.getElementById('dlBtn').style.display = 'inline-block';
+            document.getElementById('downloadFormat').style.display = 'inline-block';
+            renderBook('none');
+        }
+
+        function changeEditorPage(step) {
+            const newIdx = currentIndex + step;
+            if (newIdx >= 0 && newIdx < pages.length) {
+                currentIndex = newIdx;
+                renderBook('none');
+            }
+        }
+
+        function togglePreviewMode() {
+            isPreviewMode = !isPreviewMode;
+            const btn = document.getElementById('previewBtn');
+            const editorBar = document.getElementById('editorBar');
+            const navBtns = ['addPageBtn', 'prevPageBtn', 'nextPageBtn'];
+
+            if (isPreviewMode) {
+                btn.innerHTML = '&#9998; Back to Edit';
+                editorBar.style.display = 'none';
+                navBtns.forEach(id => document.getElementById(id).style.display = 'none');
+                currentIndex = 0; // Preview hamesha Cover se shuru hoga
+            } else {
+                btn.innerHTML = '&#128065; Preview Book';
+                editorBar.style.display = 'flex';
+                navBtns.forEach(id => document.getElementById(id).style.display = 'inline-block');
+            }
+            renderBook('none');
+        }
+            } else {
+                document.getElementById('fileInput').click();
+            }
+        }
+function getCurrentPageIdx() {
+            if (!isPreviewMode) return currentIndex;
+            if (currentIndex === 0) return 0;
+            return activePageSide === 'left' ? currentIndex : currentIndex + 1;
+        }
         async function createBook(files) {
             if (!files || files.length === 0) return;
             pages = [];
@@ -365,8 +415,9 @@
             renderBook('none');
         }
 
-        function renderBook(dir) {
+function renderBook(dir) {
             const bookContainer = document.getElementById('bookContainer');
+            const openBook = document.querySelector('.open-book');
             const leftSheet = document.getElementById('leftSheet');
             const rightSheet = document.getElementById('rightSheet');
             const leftImg = document.getElementById('leftImg');
@@ -383,45 +434,54 @@
                 leftEl.innerHTML = '';
                 rightEl.innerHTML = '';
 
-                if (currentIndex === 0) {
-                    // Sirf Cover Page: Book ko single page width ka kar do aur left page chhupa do
+                if (!isPreviewMode) {
+                    // EDITOR MODE: Ekdum clean Single Page (bina kisi beech ki line ke)
+                    openBook.classList.add('hide-crease');
                     bookContainer.style.maxWidth = '420px';
                     leftSheet.style.display = 'none';
                     rightSheet.style.width = '100%';
                     rightSheet.style.borderLeft = 'none';
+                    activePageSide = 'right';
 
-                    rightImg.src = pages[0].bg;
+                    rightImg.src = pages[currentIndex].bg;
                     rightImg.style.display = 'block';
-                    rightNum.innerText = 'Cover';
-                    renderElements(pages[0].elements, rightEl, 0);
+                    rightNum.innerText = currentIndex === 0 ? 'Cover (Page 1)' : Page ${currentIndex + 1} of ${pages.length};
+                    renderElements(pages[currentIndex].elements, rightEl, currentIndex);
                 } else {
-                    // Panna palatne par poori 2-page khuli kitaab dikhao
-                    bookContainer.style.maxWidth = '820px';
-                    leftSheet.style.display = 'flex';
-                    rightSheet.style.width = '50%';
-                    rightSheet.style.borderLeft = '1px solid #cbd5e1';
+                    // PREVIEW MODE: Asli 3D Flipbook (Cover single, baaki double spread)
+                    openBook.classList.remove('hide-crease');
+                    if (currentIndex === 0) {
+                        bookContainer.style.maxWidth = '420px';
+                        leftSheet.style.display = 'none';
+                        rightSheet.style.width = '100%';
+                        rightSheet.style.borderLeft = 'none';
 
-                    const lIdx = currentIndex;
-                    const rIdx = currentIndex + 1;
-
-                    if (pages[lIdx]) {
-                        leftImg.src = pages[lIdx].bg;
-                        leftImg.style.display = 'block';
-                        leftNum.innerText = lIdx + 1;
-                        renderElements(pages[lIdx].elements, leftEl, lIdx);
-                    } else {
-                        leftImg.style.display = 'none';
-                        leftNum.innerText = '';
-                    }
-
-                    if (pages[rIdx]) {
-                        rightImg.src = pages[rIdx].bg;
+                        rightImg.src = pages[0].bg;
                         rightImg.style.display = 'block';
-                        rightNum.innerText = rIdx + 1;
-                        renderElements(pages[rIdx].elements, rightEl, rIdx);
+                        rightNum.innerText = 'Cover';
+                        renderElements(pages[0].elements, rightEl, 0);
                     } else {
-                        rightImg.style.display = 'none';
-                        rightNum.innerText = '';
+                        bookContainer.style.maxWidth = '820px';
+                        leftSheet.style.display = 'flex';
+                        rightSheet.style.width = '50%';
+                        rightSheet.style.borderLeft = '1px solid #cbd5e1';
+
+                        const lIdx = currentIndex;
+                        const rIdx = currentIndex + 1;
+
+                        if (pages[lIdx]) {
+                            leftImg.src = pages[lIdx].bg;
+                            leftImg.style.display = 'block';
+                            leftNum.innerText = lIdx + 1;
+                            renderElements(pages[lIdx].elements, leftEl, lIdx);
+                        } else { leftImg.style.display = 'none'; leftNum.innerText = ''; }
+
+                        if (pages[rIdx]) {
+                            rightImg.src = pages[rIdx].bg;
+                            rightImg.style.display = 'block';
+                            rightNum.innerText = rIdx + 1;
+                            renderElements(pages[rIdx].elements, rightEl, rIdx);
+                        } else { rightImg.style.display = 'none'; rightNum.innerText = ''; }
                     }
                 }
 
@@ -429,15 +489,15 @@
                 leftSheet.classList.remove('flip-left-out');
             }, dir === 'none' ? 0 : 220);
         }
-
         function selectSheet(e, side) {
             if (e.target.classList.contains('custom-item') || e.target.closest('.custom-item')) return;
             activePageSide = side;
         }
 
         function getCurrentPageIdx() {
+            if (!isPreviewMode) return currentIndex;
             if (currentIndex === 0) return 0;
-            return (activePageSide === 'left') ? currentIndex - 1 : currentIndex;
+            return activePageSide === 'left' ? currentIndex : currentIndex + 1;
         }
 
         function addTextElement() {
