@@ -38,7 +38,7 @@
         .btn-green { background: #059669; }
         .btn-green:hover { background: #047857; }
 
-        /* Asli Khuli Hui Kitaab (Open Book Spread) */
+        /* Asli Khuli Hui Kitaab */
         .book-container {
             display: none;
             width: 100%;
@@ -64,7 +64,6 @@
             position: relative;
             overflow: hidden;
         }
-        /* Beech ki Kitaab ki Binding Line */
         .open-book::after {
             content: '';
             position: absolute;
@@ -112,7 +111,6 @@
         .left .page-num { left: 12px; }
         .right .page-num { right: 12px; }
 
-        /* Page Flip Animation */
         .flip-right-out { transform: rotateY(-65deg); opacity: 0.3; }
         .flip-left-out { transform: rotateY(65deg); opacity: 0.3; }
 
@@ -135,7 +133,7 @@
             + Select Images for Book
         </button>
         <button class="btn btn-green" id="dlBtn" style="display:none;" onclick="downloadBook()">
-            &#11015; Download Flipbook
+            &#11015; Download Book File
         </button>
         <input type="file" id="fileInput" accept="image/*" multiple style="display:none" onchange="createBook(this.files)">
     </div>
@@ -159,7 +157,7 @@
 
     <script>
         let pages = [];
-        let spreadIndex = 0; // Har spread mein 2 pages dikhenge (0-1, 2-3, 4-5...)
+        let currentIndex = 0; // Cover page (Index 0) se shuru hoga
         let startX = 0;
 
         async function createBook(files) {
@@ -175,14 +173,14 @@
                 pages.push(dataUrl);
             }
 
-            spreadIndex = 0;
+            currentIndex = 0;
             document.getElementById('bookContainer').style.display = 'block';
             document.getElementById('bottomInfo').style.display = 'block';
             document.getElementById('dlBtn').style.display = 'inline-block';
-            renderSpread('none');
+            renderBook('none');
         }
 
-        function renderSpread(dir) {
+        function renderBook(dir) {
             const leftSheet = document.getElementById('leftSheet');
             const rightSheet = document.getElementById('rightSheet');
             const leftImg = document.getElementById('leftImg');
@@ -194,25 +192,36 @@
             if (dir === 'prev') leftSheet.classList.add('flip-left-out');
 
             setTimeout(() => {
-                const leftIdx = spreadIndex * 2;
-                const rightIdx = leftIdx + 1;
-
-                if (pages[leftIdx]) {
-                    leftImg.src = pages[leftIdx];
-                    leftImg.style.display = 'block';
-                    leftNum.innerText = leftIdx + 1;
-                } else {
+                if (currentIndex === 0) {
+                    // Pehla panna (Cover Page) sirf Right side mein akele dikhega
                     leftImg.style.display = 'none';
                     leftNum.innerText = '';
-                }
-
-                if (pages[rightIdx]) {
-                    rightImg.src = pages[rightIdx];
+                    
+                    rightImg.src = pages[0];
                     rightImg.style.display = 'block';
-                    rightNum.innerText = rightIdx + 1;
+                    rightNum.innerText = 'Cover (1)';
                 } else {
-                    rightImg.style.display = 'none';
-                    rightNum.innerText = '';
+                    // Uske baad ke pages 2-2 ke pair mein khulenge
+                    const leftIdx = currentIndex;
+                    const rightIdx = currentIndex + 1;
+
+                    if (pages[leftIdx]) {
+                        leftImg.src = pages[leftIdx];
+                        leftImg.style.display = 'block';
+                        leftNum.innerText = leftIdx + 1;
+                    } else {
+                        leftImg.style.display = 'none';
+                        leftNum.innerText = '';
+                    }
+
+                    if (pages[rightIdx]) {
+                        rightImg.src = pages[rightIdx];
+                        rightImg.style.display = 'block';
+                        rightNum.innerText = rightIdx + 1;
+                    } else {
+                        rightImg.style.display = 'none';
+                        rightNum.innerText = '';
+                    }
                 }
 
                 rightSheet.classList.remove('flip-right-out');
@@ -222,26 +231,30 @@
 
         const bookBox = document.getElementById('bookContainer');
 
-        // Touch Slide (Mobile)
         bookBox.addEventListener('touchstart', e => { startX = e.touches[0].clientX; });
-        bookBox.addEventListener('touchend', e => {
-            handleSwipe(startX - e.changedTouches[0].clientX);
-        });
-
-        // Mouse Drag Slide (Laptop)
+        bookBox.addEventListener('touchend', e => { handleSwipe(startX - e.changedTouches[0].clientX); });
         bookBox.addEventListener('mousedown', e => { startX = e.clientX; });
-        bookBox.addEventListener('mouseup', e => {
-            handleSwipe(startX - e.clientX);
-        });
+        bookBox.addEventListener('mouseup', e => { handleSwipe(startX - e.clientX); });
 
         function handleSwipe(diff) {
-            const maxSpread = Math.ceil(pages.length / 2) - 1;
-            if (diff > 40 && spreadIndex < maxSpread) {
-                spreadIndex++;
-                renderSpread('next');
-            } else if (diff < -40 && spreadIndex > 0) {
-                spreadIndex--;
-                renderSpread('prev');
+            if (diff > 40) {
+                // Next
+                if (currentIndex === 0 && pages.length > 1) {
+                    currentIndex = 1;
+                    renderBook('next');
+                } else if (currentIndex > 0 && currentIndex + 2 < pages.length) {
+                    currentIndex += 2;
+                    renderBook('next');
+                }
+            } else if (diff < -40) {
+                // Prev
+                if (currentIndex === 1) {
+                    currentIndex = 0;
+                    renderBook('prev');
+                } else if (currentIndex > 1) {
+                    currentIndex -= 2;
+                    renderBook('prev');
+                }
             }
         }
 
@@ -252,7 +265,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Interactive Digital Book</title>
+<title>My Digital Book</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
   body { background: #1e293b; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 15px; }
@@ -279,14 +292,19 @@
   </div>
   <p class="hint">Slide left or right on the book to turn pages</p>
   <script>
-    const p = ${pagesJson}; let s = 0, sx = 0;
-    function r(d) {
+    const p = ${pagesJson}; let idx = 0, sx = 0;
+    function render(d) {
       const ls = document.getElementById('ls'), rs = document.getElementById('rs');
       if(d==='n') rs.classList.add('flip-r'); if(d==='p') ls.classList.add('flip-l');
       setTimeout(() => {
-        const l = s*2, ri = l+1;
-        document.getElementById('li').src = p[l] || ''; document.getElementById('li').style.display = p[l]?'block':'none'; document.getElementById('ln').innerText = p[l]?(l+1):'';
-        document.getElementById('ri').src = p[ri] || ''; document.getElementById('ri').style.display = p[ri]?'block':'none'; document.getElementById('rn').innerText = p[ri]?(ri+1):'';
+        if(idx === 0) {
+          document.getElementById('li').style.display = 'none'; document.getElementById('ln').innerText = '';
+          document.getElementById('ri').src = p[0]; document.getElementById('ri').style.display = 'block'; document.getElementById('rn').innerText = 'Cover (1)';
+        } else {
+          const l = idx, r = idx + 1;
+          document.getElementById('li').src = p[l] || ''; document.getElementById('li').style.display = p[l]?'block':'none'; document.getElementById('ln').innerText = p[l]?(l+1):'';
+          document.getElementById('ri').src = p[r] || ''; document.getElementById('ri').style.display = p[r]?'block':'none'; document.getElementById('rn').innerText = p[r]?(r+1):'';
+        }
         rs.classList.remove('flip-r'); ls.classList.remove('flip-l');
       }, d==='none'?0:220);
     }
@@ -296,17 +314,22 @@
     b.addEventListener('mousedown', e => sx = e.clientX);
     b.addEventListener('mouseup', e => sw(sx - e.clientX));
     function sw(df) {
-      const m = Math.ceil(p.length/2)-1;
-      if(df>40 && s<m) { s++; r('n'); } else if(df<-40 && s>0) { s--; r('p'); }
+      if(df>40) {
+        if(idx === 0 && p.length > 1) { idx = 1; render('n'); }
+        else if(idx > 0 && idx + 2 < p.length) { idx += 2; render('n'); }
+      } else if(df<-40) {
+        if(idx === 1) { idx = 0; render('p'); }
+        else if(idx > 1) { idx -= 2; render('p'); }
+      }
     }
-    r('none');
+    render('none');
   <\/script>
 </body>
 </html>`;
             const blob = new Blob([htmlFile], { type: 'text/html' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = 'My-Interactive-Book.html';
+            a.download = 'My-Digital-Book.html';
             a.click();
         }
     </script>
