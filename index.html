@@ -4,12 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D Interactive Flipbook Creator - Build & Download Digital Books</title>
-    <meta name="description" content="Create realistic 3D page-turning digital flipbooks from PDFs or images and download them as standalone interactive files ready to share or sell.">
+    <meta name="description" content="Create realistic 3D page-turning digital flipbooks from PDFs or images and download them as standalone interactive files, PDF, PNG, or JPG.">
     
     <!-- Realistic 3D Page Flip Library -->
     <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.min.js"></script>
     <!-- PDF.js to convert PDF pages into book pages -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- jsPDF for PDF Download -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
         * {
@@ -140,14 +142,14 @@
             flex-wrap: wrap;
             justify-content: center;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
             margin-top: 22px;
         }
         .btn {
             background: #4f46e5;
             color: #ffffff;
             border: none;
-            padding: 12px 24px;
+            padding: 12px 22px;
             border-radius: 8px;
             font-size: 1rem;
             font-weight: 600;
@@ -157,6 +159,17 @@
         .btn:hover {
             background: #4338ca;
             transform: translateY(-1px);
+        }
+        .format-select {
+            padding: 11px 14px;
+            border-radius: 8px;
+            border: 1.5px solid #cbd5e1;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #1e293b;
+            background: #f8fafc;
+            cursor: pointer;
+            outline: none;
         }
         .btn-download {
             background: #059669;
@@ -168,7 +181,7 @@
         .page-status {
             font-weight: 700;
             color: #334155;
-            min-width: 120px;
+            min-width: 110px;
             text-align: center;
         }
         .seo-article {
@@ -220,10 +233,18 @@
                 </div>
 
                 <div class="controls-bar">
-                    <button type="button" class="btn" onclick="flipPrev()">&#8592; Previous Page</button>
+                    <button type="button" class="btn" id="prevBtn" onclick="flipPrev()">&#8592; Previous</button>
                     <span class="page-status" id="pageCounter">Page 1</span>
-                    <button type="button" class="btn" onclick="flipNext()">Next Page &#8594;</button>
-                    <button type="button" class="btn btn-download" onclick="downloadInteractiveBook()">&#11015; Download Flipbook File</button>
+                    <button type="button" class="btn" id="nextBtn" onclick="flipNext()">Next &#8594;</button>
+                    
+                    <select id="downloadFormat" class="format-select">
+                        <option value="html">3D Interactive Book (.HTML)</option>
+                        <option value="pdf">Complete Book (.PDF)</option>
+                        <option value="png">Current Page (.PNG)</option>
+                        <option value="jpg">Current Page (.JPG)</option>
+                    </select>
+                    
+                    <button type="button" class="btn btn-download" onclick="handleDownload()">&#11015; Download</button>
                 </div>
             </div>
         </div>
@@ -235,7 +256,7 @@
             <ul>
                 <li><strong>PDF & Image Support:</strong> Upload a multi-page PDF document or select multiple photos at once.</li>
                 <li><strong>Realistic 3D Corner Curl:</strong> Experience smooth page-turning physics on both desktop and mobile screens.</li>
-                <li><strong>One-Click Standalone Download:</strong> Export your finished flipbook as a self-contained interactive file that works offline and can be uploaded, shared, or sold on digital platforms.</li>
+                <li><strong>Multiple Download Formats:</strong> Export your finished project as a standalone 3D interactive file, a complete PDF document, or save individual pages in PNG and JPG formats.</li>
             </ul>
         </div>
     </div>
@@ -355,21 +376,65 @@
         }
 
         function flipPrev() {
-            if (pageFlipInstance) pageFlipInstance.flipPrev();
+            if (!pageFlipInstance) return;
+            const current = pageFlipInstance.getCurrentPageIndex();
+            if (current > 0) {
+                pageFlipInstance.flip(current - 1);
+            }
         }
 
         function flipNext() {
-            if (pageFlipInstance) pageFlipInstance.flipNext();
+            if (!pageFlipInstance) return;
+            const current = pageFlipInstance.getCurrentPageIndex();
+            const total = pageFlipInstance.getPageCount();
+            if (current < total - 1) {
+                pageFlipInstance.flip(current + 1);
+            }
         }
 
-        function downloadInteractiveBook() {
+        function handleDownload() {
             if (pageImages.length === 0) return;
-
+            const format = document.getElementById('downloadFormat').value;
             const rawTitle = document.getElementById('bookTitle').value.trim() || 'Interactive-Flipbook';
-            const safeFileName = rawTitle.replace(/[^a-z0-9\-_]/gi, '-') + '.html';
+            const safeName = rawTitle.replace(/[^a-z0-9\-_]/gi, '-');
+            const currentIndex = pageFlipInstance ? pageFlipInstance.getCurrentPageIndex() : 0;
 
+            if (format === 'html') {
+                downloadInteractiveBook(rawTitle, safeName);
+            } else if (format === 'pdf') {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF();
+                pageImages.forEach((imgData, idx) => {
+                    if (idx > 0) pdf.addPage();
+                    const pdfWidth = pdf.internal.pageSize.getWidth();
+                    const pdfHeight = pdf.internal.pageSize.getHeight();
+                    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+                });
+                pdf.save(safeName + '.pdf');
+            } else if (format === 'png' || format === 'jpg') {
+                const canvas = document.createElement('canvas');
+                const img = new Image();
+                img.onload = function() {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    if (format === 'jpg') {
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    }
+                    ctx.drawImage(img, 0, 0);
+                    const mime = format === 'png' ? 'image/png' : 'image/jpeg';
+                    const link = document.createElement('a');
+                    link.href = canvas.toDataURL(mime, 0.92);
+                    link.download = ${safeName}-page-${currentIndex + 1}.${format};
+                    link.click();
+                };
+                img.src = pageImages[currentIndex];
+            }
+        }
+
+        function downloadInteractiveBook(rawTitle, safeFileName) {
             const pagesHtml = pageImages.map(src => <div class="page"><img src="${src}" alt="Page"></div>).join('');
-
             const standaloneHTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -392,9 +457,9 @@
   <h2>${rawTitle}</h2>
   <div class="book-box"><div id="book">${pagesHtml}</div></div>
   <div class="nav">
-    <button onclick="pf.flipPrev()">&#8592; Prev</button>
+    <button onclick="pf.flip(Math.max(0, pf.getCurrentPageIndex()-1))">&#8592; Prev</button>
     <span id="pg">Page 1</span>
-    <button onclick="pf.flipNext()">Next &#8594;</button>
+    <button onclick="pf.flip(Math.min(pf.getPageCount()-1, pf.getCurrentPageIndex()+1))">Next &#8594;</button>
   </div>
   <script>
     const pf = new St.PageFlip(document.getElementById('book'), {
@@ -410,7 +475,7 @@
             const blob = new Blob([standaloneHTML], { type: 'text/html' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = safeFileName;
+            link.download = safeFileName + '.html';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
