@@ -3,94 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Digital Book Studio</title>
+    <title>Simple E-Book Creator</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-        body { background: #1e293b; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; padding: 20px; }
-        
-        header { text-align: center; margin-bottom: 20px; }
-        header h1 { font-size: 1.8rem; margin-bottom: 5px; color: #38bdf8; }
-        header p { font-size: 0.9rem; color: #94a3b8; }
-
-        .top-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; align-items: center; }
-        .btn { padding: 10px 20px; background: #2563eb; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.95rem; }
-        .btn:hover { background: #1d4ed8; }
+        body { background: #1e293b; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        h1 { font-size: 1.5rem; margin-bottom: 15px; color: #38bdf8; }
+        .controls { margin-bottom: 15px; display: flex; gap: 10px; }
+        button { padding: 8px 16px; background: #2563eb; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #1d4ed8; }
         .btn-green { background: #16a34a; }
         .btn-green:hover { background: #15803d; }
-
-        .book-container { position: relative; width: 420px; height: 550px; background: #fff; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: none; flex-direction: column; overflow: hidden; margin-bottom: 15px; color: #000; }
-        .sheet { width: 100%; height: 100%; background: #fdfbf7; position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; text-align: center; }
         
-        .page-num { position: absolute; bottom: 15px; font-size: 0.85rem; color: #64748b; font-weight: bold; right: 20px; }
-
-        .editor-bar { display: none; background: #334155; padding: 10px 15px; border-radius: 8px; gap: 10px; align-items: center; margin-bottom: 15px; flex-wrap: wrap; justify-content: center; }
-        .editor-bar input { padding: 6px 10px; border-radius: 4px; border: 1px solid #475569; background: #1e293b; color: #fff; width: 200px; }
+        .book { width: 350px; height: 450px; background: #fdfbf7; color: #000; border-radius: 6px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); display: none; flex-direction: column; justify-content: space-between; padding: 25px; position: relative; }
+        .book h2 { font-size: 1.2rem; color: #334155; }
+        .book p { font-size: 1rem; color: #475569; line-height: 1.4; flex-grow: 1; margin-top: 10px; }
+        .page-num { font-size: 0.8rem; color: #94a3b8; text-align: right; }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>Interactive Digital Book Studio</h1>
-        <p>Create, Edit, and Manage Your Digital Book Instantly</p>
-    </header>
+    <h1>Simple E-Book Creator</h1>
 
-    <div class="top-bar">
-        <button class="btn btn-green" onclick="startApp()">Start</button>
-        <button class="btn" id="addPageBtn" style="display:none; background:#0284c7;" onclick="addPage()">+ New Page</button>
-        <button class="btn" id="prevBtn" style="display:none; background:#475569;" onclick="changePage(-1)">&#8592; Prev</button>
-        <button class="btn" id="nextBtn" style="display:none; background:#475569;" onclick="changePage(1)">Next &#8594;</button>
+    <div class="controls">
+        <button class="btn-green" onclick="startBook()">Start</button>
+        <button id="prevBtn" style="display:none;" onclick="changePage(-1)">Prev</button>
+        <button id="nextBtn" style="display:none;" onclick="changePage(1)">Next</button>
+        <button id="addBtn" style="display:none;" onclick="addPage()">+ Add Page</button>
     </div>
 
-    <div class="editor-bar" id="editorBar">
-        <input type="text" id="pageTextInput" placeholder="Write text for this page..." oninput="updatePageText(this.value)">
-    </div>
-
-    <div class="book-container" id="bookContainer">
-        <div class="sheet">
-            <h2 id="pageTitle">Cover Page</h2>
-            <p id="pageDesc" style="margin-top: 15px; color: #334155; font-size: 1.1rem;">Welcome to your digital book!</p>
-            <div class="page-num" id="pageNum">Page 1</div>
-        </div>
+    <div class="book" id="bookBox">
+        <h2 id="pTitle">Cover Page</h2>
+        <p id="pText">Welcome! Click '+ Add Page' to write your e-book.</p>
+        <div class="page-num" id="pNum">Page 1 of 1</div>
     </div>
 
     <script>
-        let pages = [{ title: "Cover Page", text: "Welcome to your digital book!" }];
-        let currentIdx = 0;
+        let pages = [{ title: "Cover Page", text: "Welcome! Click '+ Add Page' to write your e-book." }];
+        let index = 0;
 
-        function startApp() {
-            document.getElementById('bookContainer').style.display = 'flex';
-            document.getElementById('editorBar').style.display = 'flex';
-            document.getElementById('addPageBtn').style.display = 'inline-block';
+        function startBook() {
+            document.getElementById('bookBox').style.display = 'flex';
             document.getElementById('prevBtn').style.display = 'inline-block';
             document.getElementById('nextBtn').style.display = 'inline-block';
-            renderPage();
+            document.getElementById('addBtn').style.display = 'inline-block';
+            updatePage();
         }
 
         function addPage() {
-            pages.push({ title: Page ${pages.length + 1}, text: "Type your content here..." });
-            currentIdx = pages.length - 1;
-            renderPage();
+            pages.push({ title: Page ${pages.length + 1}, text: "Yeh naye page ka content hai..." });
+            index = pages.length - 1;
+            updatePage();
         }
 
-        function changePage(direction) {
-            const newIdx = currentIdx + direction;
-            if (newIdx >= 0 && newIdx < pages.length) {
-                currentIdx = newIdx;
-                renderPage();
+        function changePage(dir) {
+            if (index + dir >= 0 && index + dir < pages.length) {
+                index += dir;
+                updatePage();
             }
         }
 
-        function updatePageText(val) {
-            pages[currentIdx].text = val;
-            document.getElementById('pageDesc').innerText = val;
-        }
-
-        function renderPage() {
-            const page = pages[currentIdx];
-            document.getElementById('pageTitle').innerText = page.title;
-            document.getElementById('pageDesc').innerText = page.text;
-            document.getElementById('pageTextInput').value = page.text;
-            document.getElementById('pageNum').innerText = Page ${currentIdx + 1} of ${pages.length};
+        function updatePage() {
+            document.getElementById('pTitle').innerText = pages[index].title;
+            document.getElementById('pText').innerText = pages[index].text;
+            document.getElementById('pNum').innerText = Page ${index + 1} of ${pages.length};
         }
     </script>
 </body>
